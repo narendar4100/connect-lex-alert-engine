@@ -1,0 +1,296 @@
+---- variables.tf ----
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "environment" {
+  type    = string
+  default = "dev"
+}
+
+variable "developer_phone_primary" {
+  type    = string
+  default = "+15555550100"
+}
+
+variable "developer_phone_secondary" {
+  type    = string
+  default = "+15555550200"
+}
+
+variable "lambda_function_name" {
+  type    = string
+  default = "incident_alert_handler"
+}
+
+variable "lambda_source_zip" {
+  type    = string
+  default = "artifacts/incident_alert_lambda.zip"
+}
+
+variable "connect_instance_id" {
+  type    = string
+  default = ""
+}
+
+variable "contact_flow_id" {
+  type    = string
+  default = ""
+}
+
+variable "ddb_table_name" {
+  type    = string
+  default = "IncidentResponseLogs"
+}
+
+---- dynamodb.tf ----
+module "dynamodb_incident_logs" {
+  source = "../modules/dynamodb"
+  table_name = var.ddb_table_name
+  hash_key = "IncidentId"
+  hash_key_type = "S"
+  range_key = "Timestamp"
+  range_key_type = "N"
+  tags = {
+    Environment = var.environment
+  }
+}
+
+---- lambda.tf ----
+module "lambda_incident" {
+  source = "../modules/lambda"
+  function_name = var.lambda_function_name
+  source_zip = var.lambda_source_zip
+  runtime = "python3.12"
+  handler = "lambda_function.handler"
+  environment = {
+    CONNECT_INSTANCE_ID = var.connect_instance_id
+    CONTACT_FLOW_ID = var.contact_flow_id
+    DDB_TABLE_NAME = var.ddb_table_name
+    DEVELOPER_PHONE_PRIMARY = var.developer_phone_primary
+    DEVELOPER_PHONE_SECONDARY = var.developer_phone_secondary
+  }
+  tags = {
+    Environment = var.environment
+  }
+}
+
+---- alarm.tf ----
+resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx" {
+  alarm_name = "${var.environment}-api-gateway-5xx"
+  namespace = "AWS/ApiGateway"
+  metric_name = "5XXError"
+  statistic = "Sum"
+  period = 60
+  evaluation_periods = 1
+  threshold = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data = "notBreaching"
+  alarm_description = "Alarm when API Gateway returns 5XX errors"
+}
+
+resource "aws_cloudwatch_event_rule" "alarm_to_lambda" {
+  name = "${var.environment}-alarm-to-lambda"
+  event_pattern = jsonencode({
+    "source" = ["aws.cloudwatch"]
+    "detail-type" = ["CloudWatch Alarm State Change"]
+    "detail" = {
+      "alarmName" = [aws_cloudwatch_metric_alarm.api_gateway_5xx.alarm_name]
+      "state" = {
+        "value" = ["ALARM"]
+      }
+    }
+  })
+}
+
+data "aws_lambda_function" "target" {
+  function_name = var.lambda_function_name
+}
+
+resource "aws_cloudwatch_event_target" "invoke_lambda" {
+  rule = aws_cloudwatch_event_rule.alarm_to_lambda.name
+  target_id = "InvokeLambda"
+  arn = data.aws_lambda_function.target.arn
+}
+
+resource "aws_lambda_permission" "allow_eventbridge" {
+  statement_id = "AllowExecutionFromEventBridge"
+  action = "lambda:InvokeFunction"
+  function_name = data.aws_lambda_function.target.function_name
+  principal = "events.amazonaws.com"
+  source_arn = aws_cloudwatch_event_rule.alarm_to_lambda.arn
+}
+
+---- connect_and_lex.tf ----
+resource "aws_iam_role" "lex_role" {
+  name = "${var.environment}-lex-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lexv2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "lex_policy" {
+  name = "${var.environment}-lex-policy"
+  role = aws_iam_role.lex_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "polly:SynthesizeSpeech",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_connect_instance" "connect" {
+  identity_management_type = "CONNECT_MANAGED"
+  inbound_calls_enabled = true
+  outbound_calls_enabled = true
+  instance_alias = "${var.environment}-connect"
+}
+
+resource "aws_connect_user" "admin" {
+  instance_id = aws_connect_instance.connect.id
+  username = "connect_admin"
+  password = "ChangeMe!123"
+  identity_info = {
+    first_name = "Admin"
+    last_name = "User"
+  }
+}
+
+resource "aws_lexv2_bot" "incident_bot" {
+  bot_name = "${var.environment}-incident-bot"
+  role_arn = aws_iam_role.lex_role.arn
+  data_privacy = {
+    child_directed = false
+  }
+}
+
+resource "aws_lexv2_bot_locale" "en_us" {
+  bot_id = aws_lexv2_bot.incident_bot.id
+  locale_id = "en_US"
+  nlu_intent_confidence_threshold = 0.4
+  voice_settings = {
+    voice_id = "Joanna"
+  }
+  intent {
+    name = "AcknowledgeIncidentIntent"
+    sample_utterances = ["yes, checking","incident acknowledged"]
+  }
+  intent {
+    name = "AMAZON.FallbackIntent"
+    sample_utterances = []
+  }
+  intent {
+    name = "ClosingIntent"
+    sample_utterances = ["closing","goodbye","end call"]
+  }
+}
+
+resource "aws_lexv2_bot_alias" "incident_alias" {
+  bot_id = aws_lexv2_bot.incident_bot.id
+  bot_version = "$LATEST"
+  name = "${var.environment}-alias"
+  description = "Alias for connect integration"
+  locale_settings = {
+    locale_id = aws_lexv2_bot_locale.en_us.locale_id
+    enabled = true
+  }
+}
+
+resource "aws_connect_bot_association" "lex_association" {
+  instance_id = aws_connect_instance.connect.id
+  lex_v2_bot_alias_arn = aws_lexv2_bot_alias.incident_alias.arn
+  name = "IncidentBotAssociation"
+}
+
+---- lambda_function.py ----
+import os
+import json
+import uuid
+import boto3
+from datetime import datetime
+
+ddb = boto3.resource('dynamodb')
+connect = boto3.client('connect')
+
+def _start_call(instance_id: str, contact_flow_id: str, phone: str) -> dict:
+    return connect.start_outbound_voice_contact(
+        InstanceId=instance_id,
+        ContactFlowId=contact_flow_id,
+        DestinationPhoneNumber=phone,
+        ClientToken=str(uuid.uuid4())
+    )
+
+def _write_ddb(table_name: str, payload: dict) -> None:
+    table = ddb.Table(table_name)
+    item = {
+        "IncidentId": payload.get("IncidentId", uuid.uuid4().hex),
+        "Timestamp": datetime.utcnow().isoformat(),
+        "Intent": payload.get("Intent", ""),
+        "ConfirmationStatus": payload.get("ConfirmationStatus", ""),
+        "Details": json.dumps(payload.get("Details", {}))
+    }
+    table.put_item(Item=item)
+
+def _handle_alarm(event: dict) -> dict:
+    primary = os.environ.get('DEVELOPER_PHONE_PRIMARY')
+    secondary = os.environ.get('DEVELOPER_PHONE_SECONDARY')
+    instance_id = os.environ.get('CONNECT_INSTANCE_ID')
+    contact_flow_id = os.environ.get('CONTACT_FLOW_ID')
+    try:
+        return _start_call(instance_id, contact_flow_id, primary)
+    except Exception:
+        return _start_call(instance_id, contact_flow_id, secondary)
+
+def _handle_lex(event: dict) -> dict:
+    session = event.get('sessionState', {})
+    intent = session.get('intent', {})
+    intent_name = intent.get('name', '')
+    confirmation = intent.get('confirmationState', '')
+    table_name = os.environ.get('DDB_TABLE_NAME')
+    payload = {
+        "IncidentId": str(uuid.uuid4().hex),
+        "Intent": intent_name,
+        "ConfirmationStatus": confirmation,
+        "Details": {
+            "sessionId": event.get('sessionId'),
+            "userId": event.get('userId')
+        }
+    }
+    _write_ddb(table_name, payload)
+    response = {
+        "sessionState": {
+            "dialogAction": {"type": "Close"},
+            "intent": intent
+        },
+        "messages": [
+            {"contentType": "PlainText", "content": "Incident logged"}
+        ]
+    }
+    return response
+
+def handler(event, context):
+    if isinstance(event, dict) and event.get('detail-type') == 'CloudWatch Alarm State Change':
+        return _handle_alarm(event)
+    if isinstance(event, dict) and 'sessionState' in event:
+        return _handle_lex(event)
+    return {"status": "ignored"}

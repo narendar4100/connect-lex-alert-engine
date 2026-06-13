@@ -18,6 +18,3 @@ resource "aws_dynamodb_table" "this" {
   read_capacity  = var.read_capacity
   write_capacity = var.write_capacity
 }
-output "table_name" {
-  value = aws_dynamodb_table.this.name
-}

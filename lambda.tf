@@ -1,5 +1,5 @@
 module "lambda_incident" {
-  source = "git::https://github.com/narendar4100/terraform_modules//modules/lambda?ref=main"
+  source = "git::git@github.com:narendar4100/terraform_modules.git?ref=main"
   function_name = var.lambda_function_name
   source_zip = var.lambda_source_zip
   runtime = "python3.12"

@@ -1,5 +1,5 @@
 module "lambda_incident" {
-  source = "./modules/lambda?ref=main"
+  source = "./modules/lambda"
   function_name = var.lambda_function_name
   source_zip = var.lambda_source_zip
   runtime = "python3.12"

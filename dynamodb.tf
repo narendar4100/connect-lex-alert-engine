@@ -1,5 +1,5 @@
 module "dynamodb_incident_logs" {
-  source = "git::https://github.com/narendar4100/terraform_modules.git//modules/dynamodb?ref=main"
+  source = "git::https://github.com/narendar4100/terraform_modules//modules/dynamodb?ref=main"
   table_name = var.ddb_table_name
   hash_key = "IncidentId"
   hash_key_type = "S"

@@ -5,7 +5,7 @@ resource "aws_iam_role" "lex_role" {
     Statement = [
       {
         Effect    = "Allow"
-        Principal = { Service = "://amazonaws.com" }
+        Principal = { Service = "lexv2.amazonaws.com" }
         Action    = "sts:AssumeRole"
       }
     ]
@@ -121,11 +121,35 @@ resource "aws_lexv2models_slot_type" "incident_type" {
     resolution_strategy = "TopResolution"
   }
 
-  slot_type_values { sample_value { value = "database" } }
-  slot_type_values { sample_value { value = "api" } }
-  slot_type_values { sample_value { value = "network" } }
-  slot_type_values { sample_value { value = "db" } }
-  slot_type_values { sample_value { value = "backend" } }
+  slot_type_values {
+    sample_value {
+      value = "database"
+    }
+  }
+
+  slot_type_values {
+    sample_value {
+      value = "api"
+    }
+  }
+
+  slot_type_values {
+    sample_value {
+      value = "network"
+    }
+  }
+
+  slot_type_values {
+    sample_value {
+      value = "db"
+    }
+  }
+
+  slot_type_values {
+    sample_value {
+      value = "backend"
+    }
+  }
 }
 
 resource "aws_lexv2models_slot" "incident_type" {
@@ -139,9 +163,9 @@ resource "aws_lexv2models_slot" "incident_type" {
   value_elicitation_setting {
     slot_constraint = "Required"
     prompt_specification {
-      max_retries                = 2
+      max_retries                = 2 
       allow_interrupt            = true
-      message_selection_strategy = "Random" # Explicit configuration to align with AWS defaults
+      message_selection_strategy = "Random"
 
       message_group {
         message {
@@ -149,7 +173,6 @@ resource "aws_lexv2models_slot" "incident_type" {
         }
       }
 
-      # Adding explicit definitions for target mapping validations
       prompt_attempts_specification {
         map_block_key   = "Initial"
         allow_interrupt = true
@@ -239,9 +262,9 @@ resource "aws_lexv2models_slot" "incident_id" {
   value_elicitation_setting {
     slot_constraint = "Required"
     prompt_specification {
-      max_retries                = 2
+      max_retries                = 2 
       allow_interrupt            = true
-      message_selection_strategy = "Random" # Explicit configuration to align with AWS defaults
+      message_selection_strategy = "Random"
 
       message_group {
         message {

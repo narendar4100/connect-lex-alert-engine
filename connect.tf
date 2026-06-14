@@ -123,29 +123,48 @@ resource "aws_connect_routing_profile" "default" {
   }
 }
 
+# 1. FIX THE PERMISSIONS LIST WITH THE CORRECT SYSTEM KEY NAMES
 resource "aws_connect_security_profile" "default" {
   instance_id = aws_connect_instance.connect.id
   name        = "${var.environment}-security-profile"
   description = "Administrator Security Profile for Incident Management"
 
-  # FIXED: Converted to matching console schema strings
+  # FIXED: Programmatic system tokens required by the Connect API
   permissions = [
-    "Users: View",
-    "Users: Create",
-    "Users: Edit",
-    "Users: Delete",
-    "Routing profiles: View",
-    "Routing profiles: Create",
-    "Routing profiles: Edit",
-    "Routing profiles: Delete",
-    "Contact flows: View",
-    "Contact flows: Create",
-    "Contact flows: Edit",
-    "Contact flows: Publish",
-    "Contact flows: Delete"
+    "UsersView",
+    "UsersCreate",
+    "UsersEdit",
+    "UsersDelete",
+    "RoutingProfilesView",
+    "RoutingProfilesCreate",
+    "RoutingProfilesEdit",
+    "RoutingProfilesDelete",
+    "ContactFlowsView",
+    "ContactFlowsCreate",
+    "ContactFlowsEdit",
+    "ContactFlowsPublish",
+    "ContactFlowsDelete"
   ]
 }
 
+# 2. ADD THIS MISSING RESOURCE TO WHITELIST YOUR LAMBDA BEFORE UPLOADING THE FLOW
+resource "aws_connect_lambda_function_association" "lambda_whitelist" {
+  instance_id = aws_connect_instance.connect.id
+  function_arn = module.lambda_incident.function_arn
+}
+
+# 3. UPDATE THE CONTACT FLOW TO WAIT UNTIL THE LAMBDA IS ASSOCATED
+resource "aws_connect_contact_flow" "incident_flow" {
+  instance_id  = aws_connect_instance.connect.id
+  name         = "${var.environment}-incident-flow"
+  type         = "CONTACT_FLOW"
+  content      = local_file.contact_flow_generated.content
+
+  # FIXED: Tells Terraform to wait until the Lambda function is whitelisted in Connect first
+  depends_on = [
+    aws_connect_lambda_function_association.lambda_whitelist
+  ]
+}
 
 
 resource "aws_connect_user" "admin" {
@@ -186,12 +205,12 @@ resource "local_file" "contact_flow_generated" {
 }
 
 
-resource "aws_connect_contact_flow" "incident_flow" {
-  instance_id  = aws_connect_instance.connect.id
-  name         = "${var.environment}-incident-flow"
-  type         = "CONTACT_FLOW" # FIXED: Explicitly declared the flow schema type
-  content      = local_file.contact_flow_generated.content
-}
+# resource "aws_connect_contact_flow" "incident_flow" {
+#   instance_id  = aws_connect_instance.connect.id
+#   name         = "${var.environment}-incident-flow"
+#   type         = "CONTACT_FLOW" # FIXED: Explicitly declared the flow schema type
+#   content      = local_file.contact_flow_generated.content
+# }
 
 resource "aws_connect_phone_number" "claim" {
   country_code = var.claim_country_code

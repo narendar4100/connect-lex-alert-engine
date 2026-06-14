@@ -123,7 +123,7 @@ resource "aws_connect_routing_profile" "default" {
   }
 }
 
- 1. PUT THIS BACK TEMPORARILY TO SATISFY THE DEADLOCK
+#  1. PUT THIS BACK TEMPORARILY TO SATISFY THE DEADLOCK
 resource "aws_connect_security_profile" "default" {
   instance_id = aws_connect_instance.connect.id
   name        = "${var.environment}-security-profile"

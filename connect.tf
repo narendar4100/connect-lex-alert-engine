@@ -161,16 +161,6 @@ resource "aws_connect_phone_number" "claim" {
   type         = "DID"
 }
 
-# FIXED: Reverted back to the older, universally accepted resource block parameter layout
-resource "aws_connect_bot_association" "lex_v2_association" {
-  instance_id = aws_connect_instance.connect.id
-
-  lex_bot {
-    name        = "${var.environment}-incident-bot"
-    lex_bot_arn = var.lex_v2_bot_alias_arn 
-  }
-}
-
 output "connect_instance_id" {
   value = aws_connect_instance.connect.id
 }

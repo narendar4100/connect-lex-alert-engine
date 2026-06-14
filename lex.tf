@@ -5,7 +5,7 @@ resource "aws_iam_role" "lex_role" {
     Statement = [
       {
         Effect    = "Allow"
-        Principal = { Service = "lexv2.amazonaws.com" }
+        Principal = { Service = "://amazonaws.com" }
         Action    = "sts:AssumeRole"
       }
     ]
@@ -100,7 +100,7 @@ resource "aws_lexv2models_intent" "escalate" {
 }
 
 resource "aws_lexv2models_intent" "repeat" {
-  name        = "CustomRepeatIntent" # FIXED: Changed from RepeatIntent
+  name        = "CustomRepeatIntent"
   bot_id      = aws_lexv2models_bot.incident.id
   bot_version = "DRAFT"
   locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
@@ -121,35 +121,11 @@ resource "aws_lexv2models_slot_type" "incident_type" {
     resolution_strategy = "TopResolution"
   }
 
-  slot_type_values {
-    sample_value {
-      value = "database"
-    }
-  }
-
-  slot_type_values {
-    sample_value {
-      value = "api"
-    }
-  }
-
-  slot_type_values {
-    sample_value {
-      value = "network"
-    }
-  }
-
-  slot_type_values {
-    sample_value {
-      value = "db"
-    }
-  }
-
-  slot_type_values {
-    sample_value {
-      value = "backend"
-    }
-  }
+  slot_type_values { sample_value { value = "database" } }
+  slot_type_values { sample_value { value = "api" } }
+  slot_type_values { sample_value { value = "network" } }
+  slot_type_values { sample_value { value = "db" } }
+  slot_type_values { sample_value { value = "backend" } }
 }
 
 resource "aws_lexv2models_slot" "incident_type" {
@@ -157,19 +133,97 @@ resource "aws_lexv2models_slot" "incident_type" {
   bot_id       = aws_lexv2models_bot.incident.id
   bot_version  = "DRAFT"
   locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id    = aws_lexv2models_intent.acknowledge.intent_id    # FIXED: Use .intent_id
-  slot_type_id = aws_lexv2models_slot_type.incident_type.slot_type_id # FIXED: Use .slot_type_id
+  intent_id    = aws_lexv2models_intent.acknowledge.intent_id
+  slot_type_id = aws_lexv2models_slot_type.incident_type.slot_type_id
 
   value_elicitation_setting {
     slot_constraint = "Required"
     prompt_specification {
+      max_retries                = 2
+      allow_interrupt            = true
+      message_selection_strategy = "Random" # Explicit configuration to align with AWS defaults
+
       message_group {
         message {
           plain_text_message { value = "What type of incident is this? For example: database, API, or network." }
         }
       }
-      max_retries     = 2 
-      allow_interrupt = true
+
+      # Adding explicit definitions for target mapping validations
+      prompt_attempts_specification {
+        map_block_key   = "Initial"
+        allow_interrupt = true
+        allowed_input_types {
+          allow_audio_input = true
+          allow_dtmf_input  = true
+        }
+        audio_and_dtmf_input_specification {
+          start_timeout_ms = 4000
+          audio_specification {
+            end_timeout_ms = 640
+            max_length_ms  = 15000
+          }
+          dtmf_specification {
+            deletion_character = "*"
+            end_character      = "#"
+            end_timeout_ms     = 5000
+            max_length         = 513
+          }
+        }
+        text_input_specification {
+          start_timeout_ms = 30000
+        }
+      }
+
+      prompt_attempts_specification {
+        map_block_key   = "Retry1"
+        allow_interrupt = true
+        allowed_input_types {
+          allow_audio_input = true
+          allow_dtmf_input  = true
+        }
+        audio_and_dtmf_input_specification {
+          start_timeout_ms = 4000
+          audio_specification {
+            end_timeout_ms = 640
+            max_length_ms  = 15000
+          }
+          dtmf_specification {
+            deletion_character = "*"
+            end_character      = "#"
+            end_timeout_ms     = 5000
+            max_length         = 513
+          }
+        }
+        text_input_specification {
+          start_timeout_ms = 30000
+        }
+      }
+
+      prompt_attempts_specification {
+        map_block_key   = "Retry2"
+        allow_interrupt = true
+        allowed_input_types {
+          allow_audio_input = true
+          allow_dtmf_input  = true
+        }
+        audio_and_dtmf_input_specification {
+          start_timeout_ms = 4000
+          audio_specification {
+            end_timeout_ms = 640
+            max_length_ms  = 15000
+          }
+          dtmf_specification {
+            deletion_character = "*"
+            end_character      = "#"
+            end_timeout_ms     = 5000
+            max_length         = 513
+          }
+        }
+        text_input_specification {
+          start_timeout_ms = 30000
+        }
+      }
     }
   }
 }
@@ -179,19 +233,96 @@ resource "aws_lexv2models_slot" "incident_id" {
   bot_id       = aws_lexv2models_bot.incident.id
   bot_version  = "DRAFT"
   locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id    = aws_lexv2models_intent.acknowledge.intent_id # FIXED: Use .intent_id
-  slot_type_id = "AMAZON.AlphaNumeric" # Built-in AWS types use plain text strings
+  intent_id    = aws_lexv2models_intent.acknowledge.intent_id
+  slot_type_id = "AMAZON.AlphaNumeric"
 
   value_elicitation_setting {
     slot_constraint = "Required"
     prompt_specification {
+      max_retries                = 2
+      allow_interrupt            = true
+      message_selection_strategy = "Random" # Explicit configuration to align with AWS defaults
+
       message_group {
         message {
           plain_text_message { value = "Please say or enter the incident ID." }
         }
       }
-      max_retries     = 2 
-      allow_interrupt = true
+
+      prompt_attempts_specification {
+        map_block_key   = "Initial"
+        allow_interrupt = true
+        allowed_input_types {
+          allow_audio_input = true
+          allow_dtmf_input  = true
+        }
+        audio_and_dtmf_input_specification {
+          start_timeout_ms = 4000
+          audio_specification {
+            end_timeout_ms = 640
+            max_length_ms  = 15000
+          }
+          dtmf_specification {
+            deletion_character = "*"
+            end_character      = "#"
+            end_timeout_ms     = 5000
+            max_length         = 513
+          }
+        }
+        text_input_specification {
+          start_timeout_ms = 30000
+        }
+      }
+
+      prompt_attempts_specification {
+        map_block_key   = "Retry1"
+        allow_interrupt = true
+        allowed_input_types {
+          allow_audio_input = true
+          allow_dtmf_input  = true
+        }
+        audio_and_dtmf_input_specification {
+          start_timeout_ms = 4000
+          audio_specification {
+            end_timeout_ms = 640
+            max_length_ms  = 15000
+          }
+          dtmf_specification {
+            deletion_character = "*"
+            end_character      = "#"
+            end_timeout_ms     = 5000
+            max_length         = 513
+          }
+        }
+        text_input_specification {
+          start_timeout_ms = 30000
+        }
+      }
+
+      prompt_attempts_specification {
+        map_block_key   = "Retry2"
+        allow_interrupt = true
+        allowed_input_types {
+          allow_audio_input = true
+          allow_dtmf_input  = true
+        }
+        audio_and_dtmf_input_specification {
+          start_timeout_ms = 4000
+          audio_specification {
+            end_timeout_ms = 640
+            max_length_ms  = 15000
+          }
+          dtmf_specification {
+            deletion_character = "*"
+            end_character      = "#"
+            end_timeout_ms     = 5000
+            max_length         = 513
+          }
+        }
+        text_input_specification {
+          start_timeout_ms = 30000
+        }
+      }
     }
   }
 }

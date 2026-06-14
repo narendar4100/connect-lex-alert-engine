@@ -102,14 +102,17 @@ resource "aws_connect_queue" "default" {
 resource "aws_connect_routing_profile" "default" {
   instance_id = aws_connect_instance.connect.id
   name = "${var.environment}-routing-profile"
+  description = "Default routing profile for ${var.environment}"
+  media_concurrencies {
+    media_type  = "VOICE"
+    concurrency = 1
+  }
   default_outbound_queue_id = aws_connect_queue.default.id
-  queue_configs = [
-    {
-      queue_id = aws_connect_queue.default.id
-      delay = 0
-      priority = 1
-    }
-  ]
+  queue_configs {
+    queue_id = aws_connect_queue.default.id
+    delay    = 0
+    priority = 1
+  }
 }
 
 resource "aws_connect_security_profile" "default" {
@@ -157,7 +160,8 @@ resource "aws_connect_bot_association" "lex_association" {
   instance_id = aws_connect_instance.connect.id
 
   lex_bot {
-    lex_v2_bot_alias_arn = var.lex_v2_bot_alias_arn
+    name = "incident-bot"
+    lex_bot_arn = var.lex_v2_bot_alias_arn
   }
 }
 

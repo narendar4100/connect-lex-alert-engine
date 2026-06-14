@@ -1,201 +1,174 @@
-resource "aws_iam_role" "lex_role" {
-  name = "${var.environment}-lexv2-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = { Service = "://amazonaws.com" },
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
+resource "aws_connect_instance" "connect" {
+  identity_management_type = "CONNECT_MANAGED"
+  inbound_calls_enabled    = true
+  outbound_calls_enabled   = true
+  instance_alias           = "${var.environment}-connect"
 }
 
-resource "aws_iam_role_policy" "lex_policy" {
-  name = "${var.environment}-lexv2-policy"
-  role = aws_iam_role.lex_role.id
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "polly:SynthesizeSpeech",
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "lambda:InvokeFunction"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
+resource "aws_sns_topic" "alerts" {
+  name = "${var.environment}-alerts"
 }
 
-resource "aws_lexv2models_bot" "incident" {
-  name                        = "${var.environment}-incident-bot"
-  description                 = "Incident response bot (Lex V2)"
-  role_arn                    = aws_iam_role.lex_role.arn
-  idle_session_ttl_in_seconds = 300
+resource "aws_connect_hours_of_operation" "default" {
+  instance_id = aws_connect_instance.connect.id
+  name        = "${var.environment}-24x7"
+  time_zone   = "UTC"
 
-  data_privacy {
-    child_directed = false
-  }
-}
-
-resource "aws_lexv2models_bot_locale" "en_us" {
-  bot_id                           = aws_lexv2models_bot.incident.id
-  bot_version                      = "DRAFT"
-  locale_id                        = "en_US"
-  n_lu_intent_confidence_threshold = 0.40
-
-  voice_settings {
-    voice_id = "Joanna"
-  }
-}
-
-resource "aws_lexv2models_bot_locale" "en_gb" {
-  bot_id                           = aws_lexv2models_bot.incident.id
-  bot_version                      = "DRAFT"
-  locale_id                        = "en_GB"
-  n_lu_intent_confidence_threshold = 0.40
-
-  voice_settings {
-    voice_id = "Amy"
-  }
-}
-
-resource "aws_lexv2models_intent" "acknowledge" {
-  name        = "AcknowledgeIncidentIntent"
-  bot_id      = aws_lexv2models_bot.incident.id
-  bot_version = "DRAFT"
-  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
-
-  sample_utterance { utterance = "Yes, I acknowledge" }
-  sample_utterance { utterance = "I acknowledge the incident" }
-  sample_utterance { utterance = "Acknowledged" }
-}
-
-resource "aws_lexv2models_intent" "closing" {
-  name        = "ClosingIntent"
-  bot_id      = aws_lexv2models_bot.incident.id
-  bot_version = "DRAFT"
-  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
-
-  sample_utterance { utterance = "Close the incident" }
-  sample_utterance { utterance = "This incident is resolved" }
-  sample_utterance { utterance = "Close" }
-}
-
-resource "aws_lexv2models_intent" "escalate" {
-  name        = "EscalateIntent"
-  bot_id      = aws_lexv2models_bot.incident.id
-  bot_version = "DRAFT"
-  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
-
-  sample_utterance { utterance = "escalate this incident" }
-  sample_utterance { utterance = "I need to escalate" }
-  sample_utterance { utterance = "please escalate" }
-}
-
-resource "aws_lexv2models_intent" "repeat" {
-  name        = "RepeatIntent"
-  bot_id      = aws_lexv2models_bot.incident.id
-  bot_version = "DRAFT"
-  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
-
-  sample_utterance { utterance = "please repeat that" }
-  sample_utterance { utterance = "say that again" }
-  sample_utterance { utterance = "repeat" }
-}
-
-resource "aws_lexv2models_slot_type" "incident_type" {
-  name        = "IncidentType"
-  description = "Type of incident (e.g. database, api, network)"
-  bot_id      = aws_lexv2models_bot.incident.id
-  bot_version = "DRAFT"
-  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
-
-  value_selection_setting {
-    resolution_strategy = "TopResolution"
-  }
-
-  slot_type_values {
-    sample_value {
-      value = "database"
+  config {
+    day = "MONDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
     }
   }
-
-  slot_type_values {
-    sample_value {
-      value = "api"
+  config {
+    day = "TUESDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
     }
   }
-
-  slot_type_values {
-    sample_value {
-      value = "network"
+  config {
+    day = "WEDNESDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
     }
   }
-
-  slot_type_values {
-    sample_value {
-      value = "db"
+  config {
+    day = "THURSDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
     }
   }
-
-  slot_type_values {
-    sample_value {
-      value = "backend"
+  config {
+    day = "FRIDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
+    }
+  }
+  config {
+    day = "SATURDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
+    }
+  }
+  config {
+    day = "SUNDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
     }
   }
 }
 
-resource "aws_lexv2models_slot" "incident_type_slot" {
-  name         = "IncidentTypeSlot"
-  bot_id       = aws_lexv2models_bot.incident.id
-  bot_version  = "DRAFT"
-  locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id    = aws_lexv2models_intent.acknowledge.name
-  slot_type_id = aws_lexv2models_slot_type.incident_type.name
+resource "aws_connect_queue" "default" {
+  name                  = "${var.environment}-default-queue"
+  instance_id           = aws_connect_instance.connect.id
+  hours_of_operation_id = aws_connect_hours_of_operation.default.id
+}
 
-  value_elicitation_setting {
-    slot_constraint = "Required"
-    prompt_specification {
-      message_group {
-        message {
-          plain_text_message { value = "What type of incident is this? For example: database, API, or network." }
-        }
-      }
-      max_retries     = 2 # FIXED: Switched from max_attempts
-      allow_interrupt = true
-    }
+resource "aws_connect_routing_profile" "default" {
+  instance_id               = aws_connect_instance.connect.id
+  name                      = "${var.environment}-routing-profile"
+  description               = "Default routing profile for ${var.environment}"
+  default_outbound_queue_id = aws_connect_queue.default.id
+
+  media_concurrencies {
+    channel     = "VOICE"
+    concurrency = 1
+  }
+
+  queue_configs {
+    channel  = "VOICE"
+    queue_id = aws_connect_queue.default.id
+    delay    = 0
+    priority = 1
   }
 }
 
-resource "aws_lexv2models_slot" "incident_id" {
-  name         = "IncidentId"
-  bot_id       = aws_lexv2models_bot.incident.id
-  bot_version  = "DRAFT"
-  locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id    = aws_lexv2models_intent.acknowledge.name
-  slot_type_id = "AMAZON.AlphaNumeric"
+resource "aws_connect_security_profile" "default" {
+  instance_id = aws_connect_instance.connect.id
+  name        = "${var.environment}-security-profile"
+}
 
-  value_elicitation_setting {
-    slot_constraint = "Required"
-    prompt_specification {
-      message_group {
-        message {
-          plain_text_message { value = "Please say or enter the incident ID." }
-        }
-      }
-      max_retries     = 2 # FIXED: Switched from max_attempts
-      allow_interrupt = true
-    }
+resource "aws_connect_user" "admin" {
+  instance_id        = aws_connect_instance.connect.id
+  name               = "Admin User"
+  password           = var.admin_password
+  routing_profile_id = aws_connect_routing_profile.default.id
+  security_profile_ids = [
+    aws_connect_security_profile.default.id
+  ]
+  phone_config {
+    phone_type = "SOFT_PHONE"
   }
 }
 
-output "lex_bot_id" {
-  value = aws_lexv2models_bot.incident.id
+resource "local_file" "contact_flow_generated" {
+  filename        = "${path.module}/connect/contact_flow.generated.json"
+  file_permission = "0644"
+  content = templatefile(
+    "${path.module}/connect/contact_flow.tpl",
+    {
+      lambda_arn          = module.lambda_incident.function_arn,
+      connect_instance_id = aws_connect_instance.connect.id,
+      phone_number        = aws_connect_phone_number.claim.phone_number
+    }
+  )
+}
+
+resource "aws_connect_contact_flow" "incident_flow" {
+  instance_id = aws_connect_instance.connect.id
+  name        = "${var.environment}-incident-flow"
+  content     = local_file.contact_flow_generated.content
+}
+
+resource "aws_connect_phone_number" "claim" {
+  country_code = var.claim_country_code
+  target_arn   = aws_connect_instance.connect.arn
+  type         = "DID"
+}
+
+output "connect_instance_id" {
+  value = aws_connect_instance.connect.id
+}
+
+output "connect_admin_user_id" {
+  value = aws_connect_user.admin.id
+}
+
+output "sns_topic_arn" {
+  value = aws_sns_topic.alerts.arn
 }

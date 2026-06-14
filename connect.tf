@@ -167,9 +167,10 @@ resource "local_file" "contact_flow_generated" {
 
 
 resource "aws_connect_contact_flow" "incident_flow" {
-  instance_id = aws_connect_instance.connect.id
-  name        = "${var.environment}-incident-flow"
-  content     = local_file.contact_flow_generated.content
+  instance_id  = aws_connect_instance.connect.id
+  name         = "${var.environment}-incident-flow"
+  type         = "CONTACT_FLOW" # FIXED: Explicitly declared the flow schema type
+  content      = local_file.contact_flow_generated.content
 }
 
 resource "aws_connect_phone_number" "claim" {

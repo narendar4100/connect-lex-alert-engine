@@ -38,7 +38,14 @@
     {
       "Identifier": "CheckDTMF",
       "Type": "CheckContactAttributes",
-      "Parameters": {},
+      "Parameters": {
+        "ComparisonAttributes": [
+          {
+            "Type": "System",
+            "Attribute": "LastPressedDigit"
+          }
+        ]
+      },
       "Transitions": {
         "NextAction": "Disconnect",
         "Conditions": [
@@ -108,6 +115,17 @@
     }
   ],
   "Metadata": {
-    "Description": "Contact flow for incident alerts"
+    "Description": "Incident Contact Flow Architecture Block Map",
+    "Type": "ContactFlow",
+    "ActionMetadata": {
+      "PlayIntro": { "XPosition": 100, "YPosition": 100 },
+      "GetInput": { "XPosition": 300, "YPosition": 100 },
+      "CheckDTMF": { "XPosition": 500, "YPosition": 100 },
+      "RouteAcknowledge": { "XPosition": 700, "YPosition": 100 },
+      "InvokeLambdaAcknowledge": { "XPosition": 900, "YPosition": 100 },
+      "SetContactAttributes": { "XPosition": 1100, "YPosition": 100 },
+      "PlayAcknowledgeConfirm": { "XPosition": 1300, "YPosition": 100 },
+      "Disconnect": { "XPosition": 1500, "YPosition": 100 }
+    }
   }
 }

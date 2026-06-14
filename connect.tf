@@ -9,9 +9,94 @@ resource "aws_sns_topic" "alerts" {
   name = "${var.environment}-alerts"
 }
 
+resource "aws_connect_hours_of_operation" "default" {
+  instance_id = aws_connect_instance.connect.id
+  name        = "${var.environment}-24x7"
+  time_zone   = "UTC"
+
+  config {
+    day = "MONDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
+    }
+  }
+  config {
+    day = "TUESDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
+    }
+  }
+  config {
+    day = "WEDNESDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
+    }
+  }
+  config {
+    day = "THURSDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
+    }
+  }
+  config {
+    day = "FRIDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
+    }
+  }
+  config {
+    day = "SATURDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
+    }
+  }
+  config {
+    day = "SUNDAY"
+    start_time {
+      hours   = 0
+      minutes = 0
+    }
+    end_time {
+      hours   = 23
+      minutes = 59
+    }
+  }
+}
+
 resource "aws_connect_queue" "default" {
   name = "${var.environment}-default-queue"
   instance_id = aws_connect_instance.connect.id
+  hours_of_operation_id = aws_connect_hours_of_operation.default.id
 }
 
 resource "aws_connect_routing_profile" "default" {
@@ -43,12 +128,6 @@ resource "aws_connect_user" "admin" {
   }
 }
 
-resource "aws_connect_contact_flow" "incident_flow" {
-  instance_id = aws_connect_instance.connect.id
-  name = "${var.environment}-incident-flow"
-  content = file("${path.module}/connect/contact_flow.generated.json")
-}
-
 resource "local_file" "contact_flow_generated" {
   filename = "${path.module}/connect/contact_flow.generated.json"
   content  = templatefile(
@@ -62,6 +141,12 @@ resource "local_file" "contact_flow_generated" {
   file_permission = "0644"
 }
 
+resource "aws_connect_contact_flow" "incident_flow" {
+  instance_id = aws_connect_instance.connect.id
+  name = "${var.environment}-incident-flow"
+  content = local_file.contact_flow_generated.content
+}
+
 resource "aws_connect_phone_number" "claim" {
   country_code = var.claim_country_code
   target_arn = aws_connect_instance.connect.arn
@@ -70,8 +155,10 @@ resource "aws_connect_phone_number" "claim" {
 
 resource "aws_connect_bot_association" "lex_association" {
   instance_id = aws_connect_instance.connect.id
-  lex_v2_bot_alias_arn = var.lex_v2_bot_alias_arn
-  name = "IncidentBotAssociation"
+
+  lex_bot {
+    lex_v2_bot_alias_arn = var.lex_v2_bot_alias_arn
+  }
 }
 
 output "connect_instance_id" {

@@ -10,46 +10,30 @@
       "PlayIntro": {
         "position": { "x": 150, "y": 50 }
       },
-      "GetDeveloperInput": {
+      "RouteAcknowledge": {
         "position": { "x": 400, "y": 50 }
       },
-      "CheckPressedKey": {
+      "InvokeLambdaAcknowledge": {
         "position": { "x": 650, "y": 50 },
-        "conditions": [],
-        "conditionMetadata": [
-          {
-            "id": "match-digit-1",
-            "operator": {
-              "name": "Equals",
-              "value": "Equals",
-              "shortDisplay": "="
-            },
-            "value": "1"
+        "parameters": {
+          "LambdaFunctionARN": {
+            "displayName": "${lambda_arn}"
           }
-        ]
+        }
       },
-      "LogAcknowledge": {
+      "SetContactAttributes": {
         "position": { "x": 900, "y": 50 }
       },
-      "PlaySuccessGoodbye": {
+      "PlayAcknowledgeConfirm": {
         "position": { "x": 1150, "y": 50 }
       },
-      "PlayFailureMessage": {
-        "position": { "x": 400, "y": 300 }
-      },
-      "TriggerEscalationLambda": {
-        "position": { "x": 650, "y": 300 }
-      },
-      "DisconnectSuccess": {
+      "DisconnectNode": {
         "position": { "x": 1400, "y": 50 }
-      },
-      "DisconnectFailure": {
-        "position": { "x": 900, "y": 300 }
       }
     },
     "Annotations": [],
     "name": "Incident Management Flow",
-    "description": "Natively parses incident tracking alerts, implements on-call secondary cascading escalation structures.",
+    "description": "Parses incident notifications and logs automated responses natively.",
     "type": "contactFlow",
     "status": "PUBLISHED",
     "hash": {}
@@ -58,91 +42,31 @@
     {
       "Parameters": {
         "SkipWhenDTMFBufferEnabled": "false",
-        "Text": "This is an automated incident alert. We have detected a system issue related to $.Attributes.api_error_name."
+        "Text": "This is an automated incident alert from your monitoring system. Please wait while we register your acknowledgement."
       },
       "Identifier": "PlayIntro",
       "Type": "MessageParticipant",
       "Transitions": {
-        "NextAction": "GetDeveloperInput"
-      }
-    },
-    {
-      "Parameters": {
-        "SkipWhenDTMFBufferEnabled": "false",
-        "Text": "Would you like to acknowledge this incident? Press 1 to acknowledge, or hang up to escalate."
-      },
-      "Identifier": "GetDeveloperInput",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "CheckPressedKey"
-      }
-    },
-    {
-      "Parameters": {
-        "ComparisonValue": "$.LastPressedDigit"
-      },
-      "Identifier": "CheckPressedKey",
-      "Type": "Compare",
-      "Transitions": {
-        "NextAction": "PlayFailureMessage",
-        "Conditions": [
-          {
-            "NextAction": "LogAcknowledge",
-            "Condition": {
-              "Operator": "Equals",
-              "Operands": [
-                "1"
-              ]
-            }
-          }
-        ],
-        "Errors": [
-          {
-            "NextAction": "PlayFailureMessage",
-            "ErrorType": "NoMatchingCondition"
-          }
-        ]
+        "NextAction": "RouteAcknowledge"
       }
     },
     {
       "Parameters": {
         "Attributes": {
-          "incident_action": "developer_acknowledged"
+          "incident_action": "acknowledge"
         },
         "TargetContact": "Current"
       },
-      "Identifier": "LogAcknowledge",
+      "Identifier": "RouteAcknowledge",
       "Type": "UpdateContactAttributes",
       "Transitions": {
-        "NextAction": "PlaySuccessGoodbye",
+        "NextAction": "InvokeLambdaAcknowledge",
         "Errors": [
           {
-            "NextAction": "PlaySuccessGoodbye",
+            "NextAction": "InvokeLambdaAcknowledge",
             "ErrorType": "NoMatchingError"
           }
         ]
-      }
-    },
-    {
-      "Parameters": {
-        "SkipWhenDTMFBufferEnabled": "false",
-        "Text": "Thank you. Your acknowledgement has been successfully recorded. Investigating engineers have been notified. Goodbye."
-      },
-      "Identifier": "PlaySuccessGoodbye",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "DisconnectSuccess"
-      }
-    },
-    {
-      "Parameters": {
-        "SkipWhenDTMFBufferEnabled": "false",
-        "Text": "I did not receive a correct confirmation response. I am now cascading this alert to the secondary on-call engineer or email distribution lists. Please stand by."
-      },
-      "Identifier": "PlayFailureMessage",
-      "Type": "MessageParticipant",
-      "Transitions": {
-        "NextAction": "TriggerEscalationLambda"
       }
     },
     {
@@ -154,27 +78,52 @@
           "ResponseType": "STRING_MAP"
         }
       },
-      "Identifier": "TriggerEscalationLambda",
+      "Identifier": "InvokeLambdaAcknowledge",
       "Type": "InvokeLambdaFunction",
       "Transitions": {
-        "NextAction": "DisconnectFailure",
+        "NextAction": "SetContactAttributes",
         "Errors": [
           {
-            "NextAction": "DisconnectFailure",
+            "NextAction": "SetContactAttributes",
             "ErrorType": "NoMatchingError"
           }
         ]
       }
     },
     {
-      "Parameters": {},
-      "Identifier": "DisconnectSuccess",
-      "Type": "DisconnectParticipant",
-      "Transitions": {}
+      "Parameters": {
+        "Attributes": {
+          "connect_instance_id": "${connect_instance_id}",
+          "claim_phone_number": "${phone_number}"
+        },
+        "TargetContact": "Current"
+      },
+      "Identifier": "SetContactAttributes",
+      "Type": "UpdateContactAttributes",
+      "Transitions": {
+        "NextAction": "PlayAcknowledgeConfirm",
+        "Errors": [
+          {
+            "NextAction": "PlayAcknowledgeConfirm",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Parameters": {
+        "SkipWhenDTMFBufferEnabled": "false",
+        "Text": "Thank you. Your acknowledgement has been successfully recorded. Goodbye."
+      },
+      "Identifier": "PlayAcknowledgeConfirm",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "DisconnectNode"
+      }
     },
     {
       "Parameters": {},
-      "Identifier": "DisconnectFailure",
+      "Identifier": "DisconnectNode",
       "Type": "DisconnectParticipant",
       "Transitions": {}
     }

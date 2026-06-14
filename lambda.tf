@@ -1,19 +1,18 @@
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_file = "${path.root}/lambda_function.py"
+  # This targets your raw script file inside your root repo folder
+  source_file = "${path.root}/lambda_function.py" 
+  # This creates the zip directly inside your workflow memory target path
   output_path = "${path.root}/incident_alert_lambda.zip"
 }
 
-locals {
-  lambda_artifact = var.lambda_source_zip != "" ? var.lambda_source_zip : data.archive_file.lambda_zip.output_path
-}
-
 module "lambda_incident" {
-  source = "./modules/lambda"
+  source        = "./modules/lambda"
   function_name = var.lambda_function_name
-  source_zip = local.lambda_artifact
-  runtime = "python3.12"
-  handler = "lambda_function.handler"
+  # Forces the module to use the fresh dynamically generated zip file
+  source_zip    = data.archive_file.lambda_zip.output_path
+  runtime       = "python3.12"
+  handler       = "lambda_function.handler"
   environment = {
     CONNECT_INSTANCE_ID = var.connect_instance_id
     CONTACT_FLOW_ID = var.contact_flow_id

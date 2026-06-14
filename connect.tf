@@ -152,7 +152,9 @@ resource "local_file" "contact_flow_generated" {
     "${path.module}/connect/contact_flow.tpl",
     {
       lambda_arn          = module.lambda_incident.function_arn,
-      connect_instance_id = aws_connect_instance.connect.id
+      connect_instance_id = aws_connect_instance.connect.id,
+      # RE-ADDED: Feeds the phone variable to the transition map context safely
+      phone_number        = aws_connect_phone_number.claim.phone_number
     }
   )
 }

@@ -130,7 +130,7 @@ resource "aws_connect_security_profile" "default" {
 
 resource "aws_connect_user" "admin" {
   instance_id        = aws_connect_instance.connect.id
-  name               = "Admin User"
+  name               = "admin_user"
   password           = var.admin_password
   routing_profile_id = aws_connect_routing_profile.default.routing_profile_id # Ensure this also uses .routing_profile_id or .queue_id guidelines if applicable
   
@@ -152,11 +152,11 @@ resource "local_file" "contact_flow_generated" {
     "${path.module}/connect/contact_flow.tpl",
     {
       lambda_arn          = module.lambda_incident.function_arn,
-      connect_instance_id = aws_connect_instance.connect.id,
-      phone_number        = aws_connect_phone_number.claim.phone_number
+      connect_instance_id = aws_connect_instance.connect.id
     }
   )
 }
+
 
 resource "aws_connect_contact_flow" "incident_flow" {
   instance_id = aws_connect_instance.connect.id

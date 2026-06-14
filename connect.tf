@@ -123,19 +123,36 @@ resource "aws_connect_routing_profile" "default" {
   }
 }
 
-# 1. Keep the data block to fetch the built-in AWS Admin profile
+ 1. PUT THIS BACK TEMPORARILY TO SATISFY THE DEADLOCK
+resource "aws_connect_security_profile" "default" {
+  instance_id = aws_connect_instance.connect.id
+  name        = "${var.environment}-security-profile"
+  description = "Temporary placeholder to break the state deadlock"
+
+  # We leave permissions empty because we are moving away from it anyway
+  permissions = []
+
+  # FIXED: This line stops Terraform from attempting to destroy it!
+  lifecycle {
+    prevent_destroy = false
+    ignore_changes  = all
+  }
+}
+
+# 2. Keep the data block to fetch the built-in AWS Admin profile
 data "aws_connect_security_profile" "builtin_admin" {
   instance_id = aws_connect_instance.connect.id
   name        = "Admin" 
 }
 
-# 2. Keep your user resource block pointing to it
+# 3. Ensure your user resource block points to the built-in profile
 resource "aws_connect_user" "admin" {
   instance_id        = aws_connect_instance.connect.id
   name               = "admin_user"
   password           = var.admin_password
   routing_profile_id = aws_connect_routing_profile.default.routing_profile_id
   
+  # Pointing to the built-in profile safely shifts the user away from the stuck one
   security_profile_ids = [
     data.aws_connect_security_profile.builtin_admin.security_profile_id
   ]

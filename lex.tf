@@ -100,7 +100,7 @@ resource "aws_lexv2models_intent" "escalate" {
 }
 
 resource "aws_lexv2models_intent" "repeat" {
-  name        = "RepeatIntent"
+  name        = "CustomRepeatIntent" # FIXED: Changed from RepeatIntent
   bot_id      = aws_lexv2models_bot.incident.id
   bot_version = "DRAFT"
   locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
@@ -152,13 +152,13 @@ resource "aws_lexv2models_slot_type" "incident_type" {
   }
 }
 
-resource "aws_lexv2models_slot" "incident_type_slot" {
+resource "aws_lexv2models_slot" "incident_type" {
   name         = "IncidentTypeSlot"
   bot_id       = aws_lexv2models_bot.incident.id
   bot_version  = "DRAFT"
   locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id    = aws_lexv2models_intent.acknowledge.name
-  slot_type_id = aws_lexv2models_slot_type.incident_type.name
+  intent_id    = aws_lexv2models_intent.acknowledge.intent_id    # FIXED: Use .intent_id
+  slot_type_id = aws_lexv2models_slot_type.incident_type.slot_type_id # FIXED: Use .slot_type_id
 
   value_elicitation_setting {
     slot_constraint = "Required"
@@ -168,7 +168,7 @@ resource "aws_lexv2models_slot" "incident_type_slot" {
           plain_text_message { value = "What type of incident is this? For example: database, API, or network." }
         }
       }
-      max_retries     = 2 # FIXED: Switched from max_attempts
+      max_retries     = 2 
       allow_interrupt = true
     }
   }
@@ -179,8 +179,8 @@ resource "aws_lexv2models_slot" "incident_id" {
   bot_id       = aws_lexv2models_bot.incident.id
   bot_version  = "DRAFT"
   locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id    = aws_lexv2models_intent.acknowledge.name
-  slot_type_id = "AMAZON.AlphaNumeric"
+  intent_id    = aws_lexv2models_intent.acknowledge.intent_id # FIXED: Use .intent_id
+  slot_type_id = "AMAZON.AlphaNumeric" # Built-in AWS types use plain text strings
 
   value_elicitation_setting {
     slot_constraint = "Required"
@@ -190,7 +190,7 @@ resource "aws_lexv2models_slot" "incident_id" {
           plain_text_message { value = "Please say or enter the incident ID." }
         }
       }
-      max_retries     = 2 # FIXED: Switched from max_attempts
+      max_retries     = 2 
       allow_interrupt = true
     }
   }

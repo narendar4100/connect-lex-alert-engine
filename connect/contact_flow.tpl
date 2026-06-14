@@ -9,9 +9,7 @@
         "TextToSpeech": "This is an automated incident alert from your monitoring system. Press 1 to acknowledge, 2 to request a call back, or stay on the line to speak to our automated assistant."
       },
       "Transitions": {
-        "NextAction": "GetInput",
-        "Errors": {},
-        "Conditions": []
+        "NextAction": "GetInput"
       }
     },
     {
@@ -25,11 +23,16 @@
       },
       "Transitions": {
         "NextAction": "CheckDTMF",
-        "Errors": {
-          "Timeout": "Disconnect",
-          "Default": "Disconnect"
-        },
-        "Conditions": []
+        "Errors": [
+          {
+            "ErrorType": "NoMatch",
+            "NextAction": "Disconnect"
+          },
+          {
+            "ErrorType": "Timeout",
+            "NextAction": "Disconnect"
+          }
+        ]
       }
     },
     {
@@ -38,9 +41,6 @@
       "Parameters": {},
       "Transitions": {
         "NextAction": "Disconnect",
-        "Errors": {
-          "Default": "Disconnect"
-        },
         "Conditions": [
           {
             "Value": "1",
@@ -58,9 +58,7 @@
         }
       },
       "Transitions": {
-        "NextAction": "InvokeLambdaAcknowledge",
-        "Errors": {},
-        "Conditions": []
+        "NextAction": "InvokeLambdaAcknowledge"
       }
     },
     {
@@ -72,10 +70,12 @@
       },
       "Transitions": {
         "NextAction": "SetContactAttributes",
-        "Errors": {
-          "Default": "SetContactAttributes"
-        },
-        "Conditions": []
+        "Errors": [
+          {
+            "ErrorType": "Default",
+            "NextAction": "SetContactAttributes"
+          }
+        ]
       }
     },
     {
@@ -88,9 +88,7 @@
         }
       },
       "Transitions": {
-        "NextAction": "PlayAcknowledgeConfirm",
-        "Errors": {},
-        "Conditions": []
+        "NextAction": "PlayAcknowledgeConfirm"
       }
     },
     {
@@ -100,19 +98,16 @@
         "TextToSpeech": "Thank you. Your acknowledgement has been recorded. Goodbye."
       },
       "Transitions": {
-        "NextAction": "Disconnect",
-        "Errors": {},
-        "Conditions": []
+        "NextAction": "Disconnect"
       }
     },
     {
       "Identifier": "Disconnect",
       "Type": "Disconnect",
-      "Parameters": {},
-      "Transitions": {}
+      "Parameters": {}
     }
   ],
   "Metadata": {
-    "Description": "Contact flow for incident alerts: plays prompt, collects DTMF, invokes Lambda for acknowledgement, or continues to IVR/agent routing."
+    "Description": "Contact flow for incident alerts"
   }
 }

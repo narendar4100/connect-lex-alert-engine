@@ -138,6 +138,12 @@ resource "aws_connect_user" "admin" {
   security_profile_ids = [
     aws_connect_security_profile.default.security_profile_id
   ]
+   # FIXED: Required for CONNECT_MANAGED instances
+  identity_info {
+    first_name = "Admin"
+    last_name  = "User"
+    email      = "narendarreddy.aws@gmail.com" # Change to a valid format
+  }
   
   phone_config {
     phone_type = "SOFT_PHONE"

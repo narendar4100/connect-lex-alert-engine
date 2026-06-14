@@ -22,7 +22,6 @@ permissions:
 jobs:
   plan:
     runs-on: ubuntu-latest
-    # Run on pushes to main OR on pull requests
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
       - name: Checkout
@@ -37,9 +36,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.15.6" # Unified version
+          terraform_version: "1.15.6"
 
-      # Dynamically sets the environment context to 'dev' on push/PR, or uses the manual input
       - name: Set Environment Context
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -48,20 +46,20 @@ jobs:
             echo "TARGET_ENV=dev" >> $GITHUB_ENV
           fi
 
-      - name: Skip manual zip
-        run: echo "Using Terraform data.archive_file to build Lambda ZIP; no manual packaging required."
-
       - name: Terraform Init
         run: terraform init -backend-config=envs/${{ env.TARGET_ENV }}/backend.hcl
 
       - name: Terraform Plan
         run: terraform plan -var-file=envs/${{ env.TARGET_ENV }}/terraform.tfvars -out=tfplan
 
-      - name: Upload Plan Artifact
+      # FIXED: Uploads BOTH the binary tfplan AND the freshly zipped lambda file together
+      - name: Upload Deployment Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tfplan
-          path: tfplan # Fixed path string to match your execution workspace folder root
+          name: terraform-assets
+          path: |
+            tfplan
+            incident_alert_lambda.zip
 
   apply:
     runs-on: ubuntu-latest
@@ -80,7 +78,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.15.6" # MATCHES PLAN JOB VERSION
+          terraform_version: "1.15.6"
 
       - name: Set Environment Context
         run: |
@@ -90,13 +88,11 @@ jobs:
             echo "TARGET_ENV=dev" >> $GITHUB_ENV
           fi
 
-      - name: Skip manual zip
-        run: echo "Using Terraform data.archive_file to build Lambda ZIP; no manual packaging required."
-
-      - name: Download Plan Artifact
+      # FIXED: Downloads both files into the workspace root folder
+      - name: Download Deployment Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: tfplan
+          name: terraform-assets
           path: .
 
       - name: Terraform Init

@@ -132,14 +132,18 @@ resource "aws_connect_user" "admin" {
   instance_id        = aws_connect_instance.connect.id
   name               = "Admin User"
   password           = var.admin_password
-  routing_profile_id = aws_connect_routing_profile.default.id
+  routing_profile_id = aws_connect_routing_profile.default.routing_profile_id # Ensure this also uses .routing_profile_id or .queue_id guidelines if applicable
+  
+  # FIXED: Switched from .id to .security_profile_id
   security_profile_ids = [
-    aws_connect_security_profile.default.id
+    aws_connect_security_profile.default.security_profile_id
   ]
+  
   phone_config {
     phone_type = "SOFT_PHONE"
   }
 }
+
 
 resource "local_file" "contact_flow_generated" {
   filename        = "${path.module}/connect/contact_flow.generated.json"

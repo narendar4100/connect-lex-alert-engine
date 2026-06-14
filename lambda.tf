@@ -1,17 +1,13 @@
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  # FIXED: Explicitly use path.module to find the script file relative to where lambda.tf sits
-  source_file = "${path.module}/lambda_function.py" 
-  output_path = "${path.module}/incident_alert_lambda.zip"
+  source_file = "${path.module}/lambda_function.py"
+  output_path = "${path.module}/incident_alert_lambda.zip" # Saves exactly as incident_alert_lambda.zip in the root folder
 }
 
 module "lambda_incident" {
   source        = "./modules/lambda"
   function_name = var.lambda_function_name
-  
-  # FIXED: Keep abspath, targeting path.module to ensure cross-job synchronization
-  source_zip    = abspath(data.archive_file.lambda_zip.output_path) 
-  
+  source_zip    = abspath(data.archive_file.lambda_zip.output_path)
   runtime       = "python3.12"
   handler       = "lambda_function.handler"
   environment = {

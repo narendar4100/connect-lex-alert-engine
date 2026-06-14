@@ -96,8 +96,10 @@ resource "aws_connect_hours_of_operation" "default" {
 resource "aws_connect_queue" "default" {
   name                  = "${var.environment}-default-queue"
   instance_id           = aws_connect_instance.connect.id
-  hours_of_operation_id = aws_connect_hours_of_operation.default.id
+  # FIXED: Switched to hours_of_operation_id attribute path
+  hours_of_operation_id = aws_connect_hours_of_operation.default.hours_of_operation_id 
 }
+
 
 resource "aws_connect_routing_profile" "default" {
   instance_id               = aws_connect_instance.connect.id

@@ -1,166 +1,131 @@
 {
   "Version": "2019-10-30",
   "StartAction": "PlayIntro",
+  "Metadata": {
+    "entryPointPosition": {
+      "x": 20.0,
+      "y": 20.0
+    },
+    "ActionMetadata": {
+      "PlayIntro": {
+        "position": { "x": 150, "y": 50 }
+      },
+      "RouteAcknowledge": {
+        "position": { "x": 400, "y": 50 }
+      },
+      "InvokeLambdaAcknowledge": {
+        "position": { "x": 650, "y": 50 },
+        "parameters": {
+          "LambdaFunctionARN": {
+            "displayName": "${lambda_arn}"
+          }
+        }
+      },
+      "SetContactAttributes": {
+        "position": { "x": 900, "y": 50 }
+      },
+      "PlayAcknowledgeConfirm": {
+        "position": { "x": 1150, "y": 50 }
+      },
+      "DisconnectNode": {
+        "position": { "x": 1400, "y": 50 }
+      }
+    },
+    "Annotations": [],
+    "name": "Incident Management Flow",
+    "description": "Parses incident notifications and logs automated responses natively.",
+    "type": "contactFlow",
+    "status": "PUBLISHED",
+    "hash": {}
+  },
   "Actions": [
     {
+      "Parameters": {
+        "SkipWhenDTMFBufferEnabled": "false",
+        "Text": "This is an automated incident alert from your monitoring system. Please wait while we register your acknowledgement."
+      },
       "Identifier": "PlayIntro",
-      "Type": "PlayPrompt",
-      "Parameters": {
-        "TextToSpeech": "This is an automated incident alert from your monitoring system. Press 1 to acknowledge, 2 to request a call back, or stay on the line to speak to our automated assistant."
-      },
+      "Type": "MessageParticipant",
       "Transitions": {
-        "NextAction": "GetInput",
-        "Errors": [],
-        "Conditions": []
-      },
-      "Metadata": {
-        "position": { "x": 100, "y": 100 }
+        "NextAction": "RouteAcknowledge"
       }
     },
     {
-      "Identifier": "GetInput",
-      "Type": "GetCustomerInput",
-      "Parameters": {
-        "TimeoutInSeconds": 8,
-        "InputType": "DTMF",
-        "MaxDigits": 1,
-        "SpeechToText": false,
-        "StoreInput": true
-      },
-      "Transitions": {
-        "NextAction": "CheckDTMF",
-        "Errors": [
-          {
-            "ErrorType": "NoMatch",
-            "NextAction": "Disconnect"
-          },
-          {
-            "ErrorType": "Timeout",
-            "NextAction": "Disconnect"
-          }
-        ],
-        "Conditions": []
-      },
-      "Metadata": {
-        "position": { "x": 300, "y": 100 }
-      }
-    },
-    {
-      "Identifier": "CheckDTMF",
-      "Type": "CheckContactAttributes",
-      "Parameters": {
-        "ComparisonAttributes": [
-          {
-            "Type": "System",
-            "Attribute": "LastPressedDigit"
-          }
-        ]
-      },
-      "Transitions": {
-        "NextAction": "Disconnect",
-        "Errors": [
-          {
-            "ErrorType": "Default",
-            "NextAction": "Disconnect"
-          }
-        ],
-        "Conditions": [
-          {
-            "MatchCriteria": {
-              "Operator": "Equals",
-              "Value": "1"
-            },
-            "NextAction": "RouteAcknowledge"
-          }
-        ]
-      },
-      "Metadata": {
-        "position": { "x": 500, "y": 100 }
-      }
-    },
-    {
-      "Identifier": "RouteAcknowledge",
-      "Type": "SetAttributes",
       "Parameters": {
         "Attributes": {
           "incident_action": "acknowledge"
-        }
+        },
+        "TargetContact": "Current"
       },
+      "Identifier": "RouteAcknowledge",
+      "Type": "UpdateContactAttributes",
       "Transitions": {
         "NextAction": "InvokeLambdaAcknowledge",
-        "Errors": [],
-        "Conditions": []
-      },
-      "Metadata": {
-        "position": { "x": 700, "y": 100 }
+        "Errors": [
+          {
+            "NextAction": "InvokeLambdaAcknowledge",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
-      "Identifier": "InvokeLambdaAcknowledge",
-      "Type": "InvokeAWSLambdaFunction",
       "Parameters": {
-        "FunctionArn": "${lambda_arn}",
-        "InvocationType": "Event"
+        "LambdaFunctionARN": "${lambda_arn}",
+        "InvocationTimeLimitSeconds": "4",
+        "InvocationType": "SYNCHRONOUS",
+        "ResponseValidation": {
+          "ResponseType": "STRING_MAP"
+        }
       },
+      "Identifier": "InvokeLambdaAcknowledge",
+      "Type": "InvokeLambdaFunction",
       "Transitions": {
         "NextAction": "SetContactAttributes",
         "Errors": [
           {
-            "ErrorType": "Default",
-            "NextAction": "SetContactAttributes"
+            "NextAction": "SetContactAttributes",
+            "ErrorType": "NoMatchingError"
           }
-        ],
-        "Conditions": []
-      },
-      "Metadata": {
-        "position": { "x": 900, "y": 100 }
+        ]
       }
     },
     {
-      "Identifier": "SetContactAttributes",
-      "Type": "SetAttributes",
       "Parameters": {
         "Attributes": {
           "connect_instance_id": "${connect_instance_id}",
           "claim_phone_number": "${phone_number}"
-        }
+        },
+        "TargetContact": "Current"
       },
+      "Identifier": "SetContactAttributes",
+      "Type": "UpdateContactAttributes",
       "Transitions": {
         "NextAction": "PlayAcknowledgeConfirm",
-        "Errors": [],
-        "Conditions": []
-      },
-      "Metadata": {
-        "position": { "x": 1100, "y": 100 }
+        "Errors": [
+          {
+            "NextAction": "PlayAcknowledgeConfirm",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
-      "Identifier": "PlayAcknowledgeConfirm",
-      "Type": "PlayPrompt",
       "Parameters": {
-        "TextToSpeech": "Thank you. Your acknowledgement has been recorded. Goodbye."
+        "SkipWhenDTMFBufferEnabled": "false",
+        "Text": "Thank you. Your acknowledgement has been successfully recorded. Goodbye."
       },
+      "Identifier": "PlayAcknowledgeConfirm",
+      "Type": "MessageParticipant",
       "Transitions": {
-        "NextAction": "Disconnect",
-        "Errors": [],
-        "Conditions": []
-      },
-      "Metadata": {
-        "position": { "x": 1300, "y": 100 }
+        "NextAction": "DisconnectNode"
       }
     },
     {
-      "Identifier": "Disconnect",
-      "Type": "Disconnect",
       "Parameters": {},
-      "Transitions": {},
-      "Metadata": {
-        "position": { "x": 1500, "y": 100 }
-      }
+      "Identifier": "DisconnectNode",
+      "Type": "DisconnectParticipant",
+      "Transitions": {}
     }
-  ],
-  "Metadata": {
-    "Description": "Incident Contact Flow Architecture Block Map",
-    "Type": "ContactFlow"
-  }
+  ]
 }

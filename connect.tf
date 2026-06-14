@@ -2,7 +2,7 @@ resource "aws_connect_instance" "connect" {
   identity_management_type = "CONNECT_MANAGED"
   inbound_calls_enabled    = true
   outbound_calls_enabled   = true
-  instance_alias           = "${var.environment}-connect"
+  instance_alias           = "developer-alert-${var.environment}-connect"
 }
 
 resource "aws_sns_topic" "alerts" {

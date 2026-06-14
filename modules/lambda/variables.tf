@@ -7,13 +7,19 @@ variable "function_name" {
 }
 variable "s3_bucket" {
   type = string
+  default = ""
 }
 variable "s3_key" {
   type = string
+  default = ""
+}
+variable "source_zip" {
+  type    = string
+  default = ""
 }
 variable "handler" {
   type    = string
-  default = "lambda_function.lambda_handler"
+  default = "lambda_function.handler"
 }
 variable "runtime" {
   type    = string

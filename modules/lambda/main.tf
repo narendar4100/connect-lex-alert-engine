@@ -15,8 +15,9 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_exec" {
 }
 resource "aws_lambda_function" "this" {
   function_name = var.function_name
-  s3_bucket     = var.s3_bucket
-  s3_key        = var.s3_key
+  filename      = var.source_zip != "" ? var.source_zip : null
+  s3_bucket     = var.source_zip == "" ? (var.s3_bucket != "" ? var.s3_bucket : null) : null
+  s3_key        = var.source_zip == "" ? (var.s3_key != "" ? var.s3_key : null) : null
   handler       = var.handler
   runtime       = var.runtime
   role          = aws_iam_role.lambda_role.arn

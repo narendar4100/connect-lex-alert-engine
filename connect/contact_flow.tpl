@@ -10,6 +10,9 @@
       },
       "Transitions": {
         "NextAction": "GetInput"
+      },
+      "Metadata": {
+        "position": { "x": 100, "y": 100 }
       }
     },
     {
@@ -19,7 +22,8 @@
         "TimeoutInSeconds": 8,
         "InputType": "DTMF",
         "MaxDigits": 1,
-        "SpeechToText": false
+        "SpeechToText": false,
+        "CustomerInput": {}
       },
       "Transitions": {
         "NextAction": "CheckDTMF",
@@ -33,6 +37,9 @@
             "NextAction": "Disconnect"
           }
         ]
+      },
+      "Metadata": {
+        "position": { "x": 300, "y": 100 }
       }
     },
     {
@@ -50,10 +57,14 @@
         "NextAction": "Disconnect",
         "Conditions": [
           {
+            "ConditionType": "Equals",
             "Value": "1",
             "NextAction": "RouteAcknowledge"
           }
         ]
+      },
+      "Metadata": {
+        "position": { "x": 500, "y": 100 }
       }
     },
     {
@@ -66,6 +77,9 @@
       },
       "Transitions": {
         "NextAction": "InvokeLambdaAcknowledge"
+      },
+      "Metadata": {
+        "position": { "x": 700, "y": 100 }
       }
     },
     {
@@ -83,6 +97,9 @@
             "NextAction": "SetContactAttributes"
           }
         ]
+      },
+      "Metadata": {
+        "position": { "x": 900, "y": 100 }
       }
     },
     {
@@ -96,6 +113,9 @@
       },
       "Transitions": {
         "NextAction": "PlayAcknowledgeConfirm"
+      },
+      "Metadata": {
+        "position": { "x": 1100, "y": 100 }
       }
     },
     {
@@ -106,26 +126,22 @@
       },
       "Transitions": {
         "NextAction": "Disconnect"
+      },
+      "Metadata": {
+        "position": { "x": 1300, "y": 100 }
       }
     },
     {
       "Identifier": "Disconnect",
       "Type": "Disconnect",
-      "Parameters": {}
+      "Parameters": {},
+      "Metadata": {
+        "position": { "x": 1500, "y": 100 }
+      }
     }
   ],
   "Metadata": {
     "Description": "Incident Contact Flow Architecture Block Map",
-    "Type": "ContactFlow",
-    "ActionMetadata": {
-      "PlayIntro": { "XPosition": 100, "YPosition": 100 },
-      "GetInput": { "XPosition": 300, "YPosition": 100 },
-      "CheckDTMF": { "XPosition": 500, "YPosition": 100 },
-      "RouteAcknowledge": { "XPosition": 700, "YPosition": 100 },
-      "InvokeLambdaAcknowledge": { "XPosition": 900, "YPosition": 100 },
-      "SetContactAttributes": { "XPosition": 1100, "YPosition": 100 },
-      "PlayAcknowledgeConfirm": { "XPosition": 1300, "YPosition": 100 },
-      "Disconnect": { "XPosition": 1500, "YPosition": 100 }
-    }
+    "Type": "ContactFlow"
   }
 }

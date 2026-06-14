@@ -161,9 +161,10 @@ resource "aws_connect_phone_number" "claim" {
   type         = "DID"
 }
 
-# Corrected for Lex V2 Engine Architecture
+# Correct and supported modern resource syntax for AWS Provider v6.x
 resource "aws_connect_bot_integration" "lex_v2_association" {
   instance_id = aws_connect_instance.connect.id
+  bot_type    = "LEX_V2"
 
   lex_v2_bot {
     alias_arn = aws_lexv2models_bot_alias.incident_alias.arn

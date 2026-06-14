@@ -75,27 +75,6 @@ resource "aws_lexv2models_intent" "acknowledge" {
   sample_utterance { utterance = "Yes, I acknowledge" }
   sample_utterance { utterance = "I acknowledge the incident" }
   sample_utterance { utterance = "Acknowledged" }
-
-  intent_confirmation_setting {
-    prompt_specification {
-      max_attempts    = 2
-      allow_interrupt = true
-
-      message_group {
-        message {
-          plain_text_message { value = "Are you sure you want to acknowledge this incident?" }
-        }
-      }
-    }
-
-    declination_response {
-      message_group {
-        message {
-          plain_text_message { value = "Okay, I will not acknowledge the incident." }
-        }
-      }
-    }
-  }
 }
 
 resource "aws_lexv2models_intent" "closing" {
@@ -107,16 +86,6 @@ resource "aws_lexv2models_intent" "closing" {
   sample_utterance { utterance = "Close the incident" }
   sample_utterance { utterance = "This incident is resolved" }
   sample_utterance { utterance = "Close" }
-
-  intent_closing_setting {
-    closing_response {
-      message_group {
-        message {
-          plain_text_message { value = "Thank you. The incident will be closed." }
-        }
-      }
-    }
-  }
 }
 
 resource "aws_lexv2models_intent" "escalate" {
@@ -149,38 +118,14 @@ resource "aws_lexv2models_slot_type" "incident_type" {
   locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
 
   value_selection_setting {
-    resolution_strategy = "TOP_RESOLUTION"
+    resolution_strategy = "TopResolution"
   }
 
-  slot_type_values {
-    sample_value {
-      value = "database"
-    }
-  }
-
-  slot_type_values {
-    sample_value {
-      value = "api"
-    }
-  }
-
-  slot_type_values {
-    sample_value {
-      value = "network"
-    }
-  }
-
-  slot_type_values {
-    sample_value {
-      value = "db"
-    }
-  }
-
-  slot_type_values {
-    sample_value {
-      value = "backend"
-    }
-  }
+  slot_type_values { sample_value { value = "database" } }
+  slot_type_values { sample_value { value = "api" } }
+  slot_type_values { sample_value { value = "network" } }
+  slot_type_values { sample_value { value = "db" } }
+  slot_type_values { sample_value { value = "backend" } }
 }
 
 resource "aws_lexv2models_slot" "incident_type_slot" {
@@ -228,7 +173,7 @@ resource "aws_lexv2models_slot" "incident_id" {
 }
 
 resource "aws_lexv2models_bot_version" "incident_v1" {
-  bot_id      = aws_lexv2models_bot.incident.id
+  bot_id = aws_lexv2models_bot.incident.id
   locale_specification = {
     "en_US" = {
       source_bot_version = "DRAFT"

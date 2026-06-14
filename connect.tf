@@ -128,23 +128,24 @@ resource "aws_connect_security_profile" "default" {
   name        = "${var.environment}-security-profile"
   description = "Administrator Security Profile for Incident Management"
 
-  # FIXED: Added explicit administrative permissions to fix the 403 error
+  # FIXED: Converted to matching console schema strings
   permissions = [
-    "Users.View",
-    "Users.Create",
-    "Users.Edit",
-    "Users.Delete",
-    "RoutingProfiles.View",
-    "RoutingProfiles.Create",
-    "RoutingProfiles.Edit",
-    "RoutingProfiles.Delete",
-    "ContactFlows.View",
-    "ContactFlows.Create",
-    "ContactFlows.Edit",
-    "ContactFlows.Publish",
-    "ContactFlows.Delete"
+    "Users: View",
+    "Users: Create",
+    "Users: Edit",
+    "Users: Delete",
+    "Routing profiles: View",
+    "Routing profiles: Create",
+    "Routing profiles: Edit",
+    "Routing profiles: Delete",
+    "Contact flows: View",
+    "Contact flows: Create",
+    "Contact flows: Edit",
+    "Contact flows: Publish",
+    "Contact flows: Delete"
   ]
 }
+
 
 
 resource "aws_connect_user" "admin" {

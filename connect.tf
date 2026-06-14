@@ -126,7 +126,26 @@ resource "aws_connect_routing_profile" "default" {
 resource "aws_connect_security_profile" "default" {
   instance_id = aws_connect_instance.connect.id
   name        = "${var.environment}-security-profile"
+  description = "Administrator Security Profile for Incident Management"
+
+  # FIXED: Added explicit administrative permissions to fix the 403 error
+  permissions = [
+    "Users.View",
+    "Users.Create",
+    "Users.Edit",
+    "Users.Delete",
+    "RoutingProfiles.View",
+    "RoutingProfiles.Create",
+    "RoutingProfiles.Edit",
+    "RoutingProfiles.Delete",
+    "ContactFlows.View",
+    "ContactFlows.Create",
+    "ContactFlows.Edit",
+    "ContactFlows.Publish",
+    "ContactFlows.Delete"
+  ]
 }
+
 
 resource "aws_connect_user" "admin" {
   instance_id        = aws_connect_instance.connect.id

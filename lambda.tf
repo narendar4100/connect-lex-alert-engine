@@ -1,16 +1,15 @@
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  # This targets your raw script file inside your root repo folder
-  source_file = "${path.root}/lambda_function.py" 
-  # This creates the zip directly inside your workflow memory target path
-  output_path = "${path.root}/incident_alert_lambda.zip"
+  # FIXED: Explicitly use path.module to find the script file relative to where lambda.tf sits
+  source_file = "${path.module}/lambda_function.py" 
+  output_path = "${path.module}/incident_alert_lambda.zip"
 }
 
 module "lambda_incident" {
   source        = "./modules/lambda"
   function_name = var.lambda_function_name
   
-  # FIXED: Wrapped with abspath() so the sub-module can locate the root file securely
+  # FIXED: Keep abspath, targeting path.module to ensure cross-job synchronization
   source_zip    = abspath(data.archive_file.lambda_zip.output_path) 
   
   runtime       = "python3.12"

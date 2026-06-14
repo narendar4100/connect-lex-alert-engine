@@ -105,7 +105,9 @@ resource "aws_connect_routing_profile" "default" {
   instance_id               = aws_connect_instance.connect.id
   name                      = "${var.environment}-routing-profile"
   description               = "Default routing profile for ${var.environment}"
-  default_outbound_queue_id = aws_connect_queue.default.id
+  
+  # FIXED: Switched from .id to .queue_id attribute path
+  default_outbound_queue_id = aws_connect_queue.default.queue_id
 
   media_concurrencies {
     channel     = "VOICE"
@@ -114,7 +116,8 @@ resource "aws_connect_routing_profile" "default" {
 
   queue_configs {
     channel  = "VOICE"
-    queue_id = aws_connect_queue.default.id
+    # FIXED: Switched from .id to .queue_id here as well
+    queue_id = aws_connect_queue.default.queue_id
     delay    = 0
     priority = 1
   }

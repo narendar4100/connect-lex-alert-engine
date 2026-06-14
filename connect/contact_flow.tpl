@@ -35,20 +35,30 @@
     },
     {
       "Parameters": {
-        "TimeoutInSeconds": 8,
+        "SkipWhenDTMFBufferEnabled": "false",
         "InputType": "DTMF",
         "MaxDigits": 1,
         "SpeechToText": false,
-        "Text": "Would you like to acknowledge this incident? Press 1 to acknowledge, or hang up to escalate."
+        "Text": "Would you like to acknowledge this incident? Press 1 to acknowledge, or hang up to escalate.",
+        "CustomerInput": {}
       },
       "Identifier": "GetDeveloperInput",
       "Type": "GetCustomerInput",
       "Transitions": {
         "NextAction": "CheckPressedKey",
         "Errors": [
-          { "ErrorType": "NoMatch", "NextAction": "PlayFailureMessage" },
-          { "ErrorType": "Timeout", "NextAction": "PlayFailureMessage" }
+          {
+            "NextAction": "PlayFailureMessage",
+            "ErrorType": "NoMatch"
+          },
+          {
+            "NextAction": "PlayFailureMessage",
+            "ErrorType": "Timeout"
+          }
         ]
+      },
+      "Metadata": {
+        "position": { "x": 400, "y": 50 }
       }
     },
     {
@@ -143,3 +153,4 @@
     }
   ]
 }
+f

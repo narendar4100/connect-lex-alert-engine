@@ -230,8 +230,10 @@ resource "aws_lambda_permission" "allow_connect_callback" {
   statement_id  = "AllowExecutionFromAmazonConnect"
   action        = "lambda:InvokeFunction"
   function_name = module.lambda_incident.function_name
-  principal     = "://amazonaws.com"
-  source_arn    = aws_connect_instance.connect.arn
+  principal     = "connect.amazonaws.com"
+  
+  # FIXED: Target the clean instance ARN securely using interpolation
+  source_arn    = "${aws_connect_instance.connect.arn}"
 }
 
 

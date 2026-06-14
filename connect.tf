@@ -123,22 +123,19 @@ resource "aws_connect_routing_profile" "default" {
   }
 }
 
-# 1. REMOVE the resource "aws_connect_security_profile" block completely.
-
-# 2. DROP in this data block to fetch the built-in AWS Admin profile:
+# 1. Keep the data block to fetch the built-in AWS Admin profile
 data "aws_connect_security_profile" "builtin_admin" {
   instance_id = aws_connect_instance.connect.id
-  name        = "Admin" # This targets the pre-packaged profile built into your instance
+  name        = "Admin" 
 }
 
-# 3. Update your user resource block to map to it
+# 2. Keep your user resource block pointing to it
 resource "aws_connect_user" "admin" {
   instance_id        = aws_connect_instance.connect.id
   name               = "admin_user"
   password           = var.admin_password
   routing_profile_id = aws_connect_routing_profile.default.routing_profile_id
   
-  # FIXED: Pointing directly to the securely whitelisted profile data reference
   security_profile_ids = [
     data.aws_connect_security_profile.builtin_admin.security_profile_id
   ]
@@ -146,7 +143,7 @@ resource "aws_connect_user" "admin" {
   identity_info {
     first_name = "Admin"
     last_name  = "User"
-    email      = "narendarreddy.aws@gmail.com"
+    email      = "admin@yourcompany.com"
   }
 
   phone_config {

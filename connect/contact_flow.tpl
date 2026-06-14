@@ -1,18 +1,51 @@
 {
   "Version": "2019-10-30",
-  "StartAction": "PlayDynamicIntro",
+  "StartAction": "PlayIntro",
   "Metadata": {
-    "entryPointPosition": { "x": 20.0, "y": 20.0 },
+    "entryPointPosition": {
+      "x": 20.0,
+      "y": 20.0
+    },
     "ActionMetadata": {
-      "PlayDynamicIntro": { "position": { "x": 150, "y": 50 } },
-      "GetDeveloperInput": { "position": { "x": 400, "y": 50 } },
-      "CheckPressedKey": { "position": { "x": 650, "y": 50 } },
-      "LogAcknowledge": { "position": { "x": 900, "y": 50 } },
-      "PlaySuccessGoodbye": { "position": { "x": 1150, "y": 50 } },
-      "DisconnectSuccess": { "position": { "x": 1400, "y": 50 } },
-      "PlayFailureMessage": { "position": { "x": 650, "y": 300 } },
-      "TriggerEscalationLambda": { "position": { "x": 900, "y": 300 } },
-      "DisconnectFailure": { "position": { "x": 1150, "y": 300 } }
+      "PlayIntro": {
+        "position": { "x": 150, "y": 50 }
+      },
+      "GetDeveloperInput": {
+        "position": { "x": 400, "y": 50 }
+      },
+      "CheckPressedKey": {
+        "position": { "x": 650, "y": 50 },
+        "conditions": [],
+        "conditionMetadata": [
+          {
+            "id": "match-digit-1",
+            "operator": {
+              "name": "Equals",
+              "value": "Equals",
+              "shortDisplay": "="
+            },
+            "value": "1"
+          }
+        ]
+      },
+      "LogAcknowledge": {
+        "position": { "x": 900, "y": 50 }
+      },
+      "PlaySuccessGoodbye": {
+        "position": { "x": 1150, "y": 50 }
+      },
+      "PlayFailureMessage": {
+        "position": { "x": 400, "y": 300 }
+      },
+      "TriggerEscalationLambda": {
+        "position": { "x": 650, "y": 300 }
+      },
+      "DisconnectSuccess": {
+        "position": { "x": 1400, "y": 50 }
+      },
+      "DisconnectFailure": {
+        "position": { "x": 900, "y": 300 }
+      }
     },
     "Annotations": [],
     "name": "Incident Management Flow",
@@ -27,7 +60,7 @@
         "SkipWhenDTMFBufferEnabled": "false",
         "Text": "This is an automated incident alert. We have detected a system issue related to $.Attributes.api_error_name."
       },
-      "Identifier": "PlayDynamicIntro",
+      "Identifier": "PlayIntro",
       "Type": "MessageParticipant",
       "Transitions": {
         "NextAction": "GetDeveloperInput"
@@ -36,54 +69,40 @@
     {
       "Parameters": {
         "SkipWhenDTMFBufferEnabled": "false",
-        "InputType": "DTMF",
-        "MaxDigits": 1,
-        "SpeechToText": false,
-        "Text": "Would you like to acknowledge this incident? Press 1 to acknowledge, or hang up to escalate.",
-        "CustomerInput": {}
+        "Text": "Would you like to acknowledge this incident? Press 1 to acknowledge, or hang up to escalate."
       },
       "Identifier": "GetDeveloperInput",
-      "Type": "GetCustomerInput",
+      "Type": "MessageParticipant",
       "Transitions": {
-        "NextAction": "CheckPressedKey",
-        "Errors": [
-          {
-            "NextAction": "PlayFailureMessage",
-            "ErrorType": "NoMatch"
-          },
-          {
-            "NextAction": "PlayFailureMessage",
-            "ErrorType": "Timeout"
-          }
-        ]
-      },
-      "Metadata": {
-        "position": { "x": 400, "y": 50 }
+        "NextAction": "CheckPressedKey"
       }
     },
     {
       "Parameters": {
-        "ComparisonAttributes": [
-          {
-            "Type": "System",
-            "Attribute": "LastPressedDigit"
-          }
-        ]
-      },
-      "Transitions": {
-        "NextAction": "PlayFailureMessage",
-        "Errors": [
-          { "ErrorType": "NoMatch", "NextAction": "PlayFailureMessage" }
-        ],
-        "Conditions": [
-          {
-            "MatchCriteria": { "Operator": "Equals", "Value": "1" },
-            "NextAction": "LogAcknowledge"
-          }
-        ]
+        "ComparisonValue": "$.LastPressedDigit"
       },
       "Identifier": "CheckPressedKey",
-      "Type": "CheckContactAttributes"
+      "Type": "Compare",
+      "Transitions": {
+        "NextAction": "PlayFailureMessage",
+        "Conditions": [
+          {
+            "NextAction": "LogAcknowledge",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "1"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "PlayFailureMessage",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
+      }
     },
     {
       "Parameters": {
@@ -97,7 +116,10 @@
       "Transitions": {
         "NextAction": "PlaySuccessGoodbye",
         "Errors": [
-          { "NextAction": "PlaySuccessGoodbye", "ErrorType": "NoMatchingError" }
+          {
+            "NextAction": "PlaySuccessGoodbye",
+            "ErrorType": "NoMatchingError"
+          }
         ]
       }
     },
@@ -128,14 +150,19 @@
         "LambdaFunctionARN": "${lambda_arn}",
         "InvocationTimeLimitSeconds": "4",
         "InvocationType": "SYNCHRONOUS",
-        "ResponseValidation": { "ResponseType": "STRING_MAP" }
+        "ResponseValidation": {
+          "ResponseType": "STRING_MAP"
+        }
       },
       "Identifier": "TriggerEscalationLambda",
       "Type": "InvokeLambdaFunction",
       "Transitions": {
         "NextAction": "DisconnectFailure",
         "Errors": [
-          { "NextAction": "DisconnectFailure", "ErrorType": "NoMatchingError" }
+          {
+            "NextAction": "DisconnectFailure",
+            "ErrorType": "NoMatchingError"
+          }
         ]
       }
     },

@@ -104,11 +104,12 @@ resource "aws_connect_routing_profile" "default" {
   name = "${var.environment}-routing-profile"
   description = "Default routing profile for ${var.environment}"
   media_concurrencies {
-    media_type  = "VOICE"
+    channel     = "VOICE"
     concurrency = 1
   }
   default_outbound_queue_id = aws_connect_queue.default.id
   queue_configs {
+    channel  = "VOICE"
     queue_id = aws_connect_queue.default.id
     delay    = 0
     priority = 1

@@ -45,10 +45,10 @@ resource "aws_lexv2models_bot" "incident" {
 }
 
 resource "aws_lexv2models_bot_locale" "en_us" {
-  bot_id                          = aws_lexv2models_bot.incident.id
-  bot_version                     = "DRAFT"
-  locale_id                       = "en_US"
-  nlu_intent_confidence_threshold = 0.40
+  bot_id                           = aws_lexv2models_bot.incident.id
+  bot_version                      = "DRAFT"
+  locale_id                        = "en_US"
+  n_lu_intent_confidence_threshold = 0.40
 
   voice_settings {
     voice_id = "Joanna"
@@ -56,10 +56,10 @@ resource "aws_lexv2models_bot_locale" "en_us" {
 }
 
 resource "aws_lexv2models_bot_locale" "en_gb" {
-  bot_id                          = aws_lexv2models_bot.incident.id
-  bot_version                     = "DRAFT"
-  locale_id                       = "en_GB"
-  nlu_intent_confidence_threshold = 0.40
+  bot_id                           = aws_lexv2models_bot.incident.id
+  bot_version                      = "DRAFT"
+  locale_id                        = "en_GB"
+  n_lu_intent_confidence_threshold = 0.40
 
   voice_settings {
     voice_id = "Amy"
@@ -67,10 +67,10 @@ resource "aws_lexv2models_bot_locale" "en_gb" {
 }
 
 resource "aws_lexv2models_intent" "acknowledge" {
-  name          = "AcknowledgeIncidentIntent"
-  bot_id        = aws_lexv2models_bot.incident.id
-  bot_version   = "DRAFT"
-  locale_id     = aws_lexv2models_bot_locale.en_us.locale_id
+  name        = "AcknowledgeIncidentIntent"
+  bot_id      = aws_lexv2models_bot.incident.id
+  bot_version = "DRAFT"
+  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
 
   sample_utterance { utterance = "Yes, I acknowledge" }
   sample_utterance { utterance = "I acknowledge the incident" }
@@ -99,10 +99,10 @@ resource "aws_lexv2models_intent" "acknowledge" {
 }
 
 resource "aws_lexv2models_intent" "closing" {
-  name          = "ClosingIntent"
-  bot_id        = aws_lexv2models_bot.incident.id
-  bot_version   = "DRAFT"
-  locale_id     = aws_lexv2models_bot_locale.en_us.locale_id
+  name        = "ClosingIntent"
+  bot_id      = aws_lexv2models_bot.incident.id
+  bot_version = "DRAFT"
+  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
 
   sample_utterance { utterance = "Close the incident" }
   sample_utterance { utterance = "This incident is resolved" }
@@ -120,10 +120,10 @@ resource "aws_lexv2models_intent" "closing" {
 }
 
 resource "aws_lexv2models_intent" "escalate" {
-  name          = "EscalateIntent"
-  bot_id        = aws_lexv2models_bot.incident.id
-  bot_version   = "DRAFT"
-  locale_id     = aws_lexv2models_bot_locale.en_us.locale_id
+  name        = "EscalateIntent"
+  bot_id      = aws_lexv2models_bot.incident.id
+  bot_version = "DRAFT"
+  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
 
   sample_utterance { utterance = "escalate this incident" }
   sample_utterance { utterance = "I need to escalate" }
@@ -131,10 +131,10 @@ resource "aws_lexv2models_intent" "escalate" {
 }
 
 resource "aws_lexv2models_intent" "repeat" {
-  name          = "RepeatIntent"
-  bot_id        = aws_lexv2models_bot.incident.id
-  bot_version   = "DRAFT"
-  locale_id     = aws_lexv2models_bot_locale.en_us.locale_id
+  name        = "RepeatIntent"
+  bot_id      = aws_lexv2models_bot.incident.id
+  bot_version = "DRAFT"
+  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
 
   sample_utterance { utterance = "please repeat that" }
   sample_utterance { utterance = "say that again" }
@@ -183,13 +183,12 @@ resource "aws_lexv2models_slot_type" "incident_type" {
   }
 }
 
-
 resource "aws_lexv2models_slot" "incident_type_slot" {
-  name        = "IncidentTypeSlot"
-  bot_id      = aws_lexv2models_bot.incident.id
-  bot_version = "DRAFT"
-  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id   = aws_lexv2models_intent.acknowledge.intent_id
+  name         = "IncidentTypeSlot"
+  bot_id       = aws_lexv2models_bot.incident.id
+  bot_version  = "DRAFT"
+  locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
+  intent_id    = aws_lexv2models_intent.acknowledge.intent_id
   slot_type_id = aws_lexv2models_slot_type.incident_type.slot_type_id
 
   value_elicitation_setting {
@@ -207,11 +206,11 @@ resource "aws_lexv2models_slot" "incident_type_slot" {
 }
 
 resource "aws_lexv2models_slot" "incident_id" {
-  name        = "IncidentId"
-  bot_id      = aws_lexv2models_bot.incident.id
-  bot_version = "DRAFT"
-  locale_id   = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id   = aws_lexv2models_intent.acknowledge.intent_id
+  name         = "IncidentId"
+  bot_id       = aws_lexv2models_bot.incident.id
+  bot_version  = "DRAFT"
+  locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
+  intent_id    = aws_lexv2models_intent.acknowledge.intent_id
   slot_type_id = "AMAZON.AlphaNumeric"
 
   value_elicitation_setting {

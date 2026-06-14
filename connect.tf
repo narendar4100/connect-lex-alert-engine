@@ -1,8 +1,8 @@
 resource "aws_connect_instance" "connect" {
   identity_management_type = "CONNECT_MANAGED"
-  inbound_calls_enabled = true
-  outbound_calls_enabled = true
-  instance_alias = "${var.environment}-connect"
+  inbound_calls_enabled    = true
+  outbound_calls_enabled   = true
+  instance_alias           = "${var.environment}-connect"
 }
 
 resource "aws_sns_topic" "alerts" {
@@ -94,20 +94,22 @@ resource "aws_connect_hours_of_operation" "default" {
 }
 
 resource "aws_connect_queue" "default" {
-  name = "${var.environment}-default-queue"
-  instance_id = aws_connect_instance.connect.id
+  name                  = "${var.environment}-default-queue"
+  instance_id           = aws_connect_instance.connect.id
   hours_of_operation_id = aws_connect_hours_of_operation.default.id
 }
 
 resource "aws_connect_routing_profile" "default" {
-  instance_id = aws_connect_instance.connect.id
-  name = "${var.environment}-routing-profile"
-  description = "Default routing profile for ${var.environment}"
+  instance_id               = aws_connect_instance.connect.id
+  name                      = "${var.environment}-routing-profile"
+  description               = "Default routing profile for ${var.environment}"
+  default_outbound_queue_id = aws_connect_queue.default.id
+
   media_concurrencies {
     channel     = "VOICE"
     concurrency = 1
   }
-  default_outbound_queue_id = aws_connect_queue.default.id
+
   queue_configs {
     channel  = "VOICE"
     queue_id = aws_connect_queue.default.id
@@ -118,51 +120,53 @@ resource "aws_connect_routing_profile" "default" {
 
 resource "aws_connect_security_profile" "default" {
   instance_id = aws_connect_instance.connect.id
-  name = "${var.environment}-security-profile"
+  name        = "${var.environment}-security-profile"
 }
 
 resource "aws_connect_user" "admin" {
-  instance_id = aws_connect_instance.connect.id
-  name = "Admin User"
-  password = var.admin_password
+  instance_id        = aws_connect_instance.connect.id
+  name               = "Admin User"
+  password           = var.admin_password
   routing_profile_id = aws_connect_routing_profile.default.id
-  security_profile_ids = [aws_connect_security_profile.default.id]
+  security_profile_ids = [
+    aws_connect_security_profile.default.id
+  ]
   phone_config {
     phone_type = "SOFT_PHONE"
   }
 }
 
 resource "local_file" "contact_flow_generated" {
-  filename = "${path.module}/connect/contact_flow.generated.json"
-  content  = templatefile(
+  filename        = "${path.module}/connect/contact_flow.generated.json"
+  file_permission = "0644"
+  content = templatefile(
     "${path.module}/connect/contact_flow.tpl",
     {
-      lambda_arn = module.lambda_incident.function_arn,
+      lambda_arn          = module.lambda_incident.function_arn,
       connect_instance_id = aws_connect_instance.connect.id,
-      phone_number = aws_connect_phone_number.claim.phone_number
+      phone_number        = aws_connect_phone_number.claim.phone_number
     }
   )
-  file_permission = "0644"
 }
 
 resource "aws_connect_contact_flow" "incident_flow" {
   instance_id = aws_connect_instance.connect.id
-  name = "${var.environment}-incident-flow"
-  content = local_file.contact_flow_generated.content
+  name        = "${var.environment}-incident-flow"
+  content     = local_file.contact_flow_generated.content
 }
 
 resource "aws_connect_phone_number" "claim" {
   country_code = var.claim_country_code
-  target_arn = aws_connect_instance.connect.arn
-  type = "DID"
+  target_arn   = aws_connect_instance.connect.arn
+  type         = "DID"
 }
 
-resource "aws_connect_bot_association" "lex_association" {
+# Corrected for Lex V2 Engine Architecture
+resource "aws_connect_bot_integration" "lex_v2_association" {
   instance_id = aws_connect_instance.connect.id
 
-  lex_bot {
-    name = "incident-bot"
-    lex_bot_arn = var.lex_v2_bot_alias_arn
+  lex_v2_bot {
+    alias_arn = aws_lexv2models_bot_alias.incident_alias.arn
   }
 }
 

@@ -161,12 +161,13 @@ resource "aws_connect_phone_number" "claim" {
   type         = "DID"
 }
 
-resource "aws_connect_bot_integration" "lex_v2_association" {
+# FIXED: Reverted back to the older, universally accepted resource block parameter layout
+resource "aws_connect_bot_association" "lex_v2_association" {
   instance_id = aws_connect_instance.connect.id
-  bot_type    = "LEX_V2"
 
-  lex_v2_bot {
-    alias_arn = aws_lexv2models_bot_alias.incident_alias.arn
+  lex_bot {
+    name        = "${var.environment}-incident-bot"
+    lex_bot_arn = var.lex_v2_bot_alias_arn 
   }
 }
 

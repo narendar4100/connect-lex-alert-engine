@@ -157,8 +157,8 @@ resource "aws_lexv2models_slot" "incident_type_slot" {
   bot_id       = aws_lexv2models_bot.incident.id
   bot_version  = "DRAFT"
   locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id    = aws_lexv2models_intent.acknowledge.intent_id
-  slot_type_id = aws_lexv2models_slot_type.incident_type.slot_type_id
+  intent_id    = aws_lexv2models_intent.acknowledge.name
+  slot_type_id = aws_lexv2models_slot_type.incident_type.name
 
   value_elicitation_setting {
     slot_constraint = "Required"
@@ -168,7 +168,7 @@ resource "aws_lexv2models_slot" "incident_type_slot" {
           plain_text_message { value = "What type of incident is this? For example: database, API, or network." }
         }
       }
-      max_attempts    = 2
+      max_retries     = 2 # FIXED: Switched from max_attempts
       allow_interrupt = true
     }
   }
@@ -179,7 +179,7 @@ resource "aws_lexv2models_slot" "incident_id" {
   bot_id       = aws_lexv2models_bot.incident.id
   bot_version  = "DRAFT"
   locale_id    = aws_lexv2models_bot_locale.en_us.locale_id
-  intent_id    = aws_lexv2models_intent.acknowledge.intent_id
+  intent_id    = aws_lexv2models_intent.acknowledge.name
   slot_type_id = "AMAZON.AlphaNumeric"
 
   value_elicitation_setting {
@@ -190,37 +190,12 @@ resource "aws_lexv2models_slot" "incident_id" {
           plain_text_message { value = "Please say or enter the incident ID." }
         }
       }
-      max_attempts    = 2
+      max_retries     = 2 # FIXED: Switched from max_attempts
       allow_interrupt = true
     }
   }
 }
 
-resource "aws_lexv2models_bot_version" "incident_v1" {
-  bot_id = aws_lexv2models_bot.incident.id
-  locale_specification = {
-    "en_US" = {
-      source_bot_version = "DRAFT"
-    }
-  }
-  depends_on = [
-    aws_lexv2models_intent.acknowledge,
-    aws_lexv2models_intent.closing,
-    aws_lexv2models_intent.escalate,
-    aws_lexv2models_intent.repeat
-  ]
-}
-
-resource "aws_lexv2models_bot_alias" "incident_alias" {
-  name        = "${var.environment}-alias"
-  bot_id      = aws_lexv2models_bot.incident.id
-  bot_version = aws_lexv2models_bot_version.incident_v1.bot_version
-}
-
 output "lex_bot_id" {
   value = aws_lexv2models_bot.incident.id
-}
-
-output "lex_bot_alias_arn" {
-  value = aws_lexv2models_bot_alias.incident_alias.arn
 }

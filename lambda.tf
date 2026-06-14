@@ -16,3 +16,25 @@ module "lambda_incident" {
   }
 }
 
+resource "aws_iam_role_policy" "lambda_permissions" {
+  name = "${var.lambda_function_name}-permissions"
+  role = module.lambda_incident.role_name
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "sns:Publish",
+          "dynamodb:PutItem",
+          "connect:StartOutboundVoiceContact"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+

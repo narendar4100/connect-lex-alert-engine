@@ -38,6 +38,11 @@ jobs:
         with:
           terraform_version: "1.15.6" 
 
+      # - name: Package Lambda
+      #   run: |
+      #     mkdir -p artifacts
+      #     zip -j artifacts/incident_alert_lambda.zip lambda_function.py
+
       - name: Terraform Init
         run: terraform init -backend-config=envs/dev/backend.hcl
 
@@ -68,6 +73,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.0
+
+      - name: Package Lambda
+        run: |
+          mkdir -p artifacts
+          zip -j artifacts/incident_alert_lambda.zip lambda_function.py
 
       - name: Terraform Init
         run: terraform init -backend-config=envs/${{ github.event.inputs.environment }}/backend.hcl

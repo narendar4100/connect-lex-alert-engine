@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "schemaVersion": "1.0"
+  },
+  "intents": [
+    {
+      "name": "AcknowledgeIncidentIntent",
+      "sampleUtterances": [
+        "yes, checking",
+        "incident acknowledged",
+        "I will check it now"
+      ],
+      "fulfillmentActivity": {
+        "type": "CodeHook",
+        "codeHook": {
+          "uri": "arn:aws:lambda:us-east-1:123456789012:function:incident_alert_handler",
+          "messageVersion": "1.0"
+        }
+      }
+    },
+    {
+      "name": "ClosingIntent",
+      "sampleUtterances": [
+        "closing",
+        "goodbye",
+        "end call"
+      ],
+      "fulfillmentActivity": {
+        "type": "ReturnIntent"
+      }
+    },
+    {
+      "name": "AMAZON.FallbackIntent",
+      "sampleUtterances": []
+    }
+  ],
+  "slots": [
+    {
+      "name": "DeveloperPrimary",
+      "slotType": "AMAZON.PhoneNumber",
+      "slotConstraint": "Optional"
+    },
+    {
+      "name": "DeveloperSecondary",
+      "slotType": "AMAZON.PhoneNumber",
+      "slotConstraint": "Optional"
+    }
+  ]
+}

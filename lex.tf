@@ -52,6 +52,15 @@ resource "aws_lexv2_bot_locale" "en_us" {
   }
 }
 
+resource "aws_lexv2_bot_locale" "en_gb" {
+  bot_id    = aws_lexv2_bot.incident.id
+  locale_id = "en_GB"
+  nlu_intent_confidence_threshold = 0.40
+  voice_settings {
+    voice_id = "Amy"
+  }
+}
+
 resource "aws_lexv2_intent" "acknowledge" {
   name = "AcknowledgeIncidentIntent"
   bot_id = aws_lexv2_bot.incident.id
@@ -94,20 +103,26 @@ resource "aws_lexv2_intent" "closing" {
   }
 }
 
-resource "aws_lexv2_slot" "incident_id" {
-  name = "IncidentId"
+resource "aws_lexv2_intent" "escalate" {
+  name = "EscalateIntent"
   bot_id = aws_lexv2_bot.incident.id
   bot_locale_id = aws_lexv2_bot_locale.en_us.id
-  value_elicitation_setting {
-    slot_constraint = "Required"
-    prompt_specification {
-      message_groups = [
-        { message = { plain_text_message = { value = "Please say or enter the incident ID." } } }
-      ]
-      max_attempts = 2
-      allow_interrupt = true
-    }
-  }
+  sample_utterances = [
+    { utterance = "escalate this incident" },
+    { utterance = "I need to escalate" },
+    { utterance = "please escalate" }
+  ]
+}
+
+resource "aws_lexv2_intent" "repeat" {
+  name = "RepeatIntent"
+  bot_id = aws_lexv2_bot.incident.id
+  bot_locale_id = aws_lexv2_bot_locale.en_us.id
+  sample_utterances = [
+    { utterance = "please repeat that" },
+    { utterance = "say that again" },
+    { utterance = "repeat" }
+  ]
 }
 
 resource "aws_lexv2_slot_type" "incident_type" {
@@ -152,45 +167,34 @@ resource "aws_lexv2_slot" "incident_type_slot" {
   }
 }
 
+resource "aws_lexv2_slot" "incident_id" {
+  name = "IncidentId"
+  bot_id = aws_lexv2_bot.incident.id
+  bot_locale_id = aws_lexv2_bot_locale.en_us.id
+  value_elicitation_setting {
+    slot_constraint = "Required"
+    prompt_specification {
+      message_groups = [
+        { message = { plain_text_message = { value = "Please say or enter the incident ID." } } }
+      ]
+      max_attempts = 2
+      allow_interrupt = true
+    }
+  }
+}
+
 resource "aws_lexv2_bot_alias" "incident_alias" {
   name = "${var.environment}-alias"
-resource "aws_lexv2_intent" "escalate" {
-  name = "EscalateIntent"
   bot_id = aws_lexv2_bot.incident.id
-  bot_locale_id = aws_lexv2_bot_locale.en_us.id
-  sample_utterances = [
-    { utterance = "escalate this incident" },
-    { utterance = "I need to escalate" },
-    { utterance = "please escalate" }
-  ]
+  bot_version = "$LATEST"
 }
 
-resource "aws_lexv2_intent" "repeat" {
-  name = "RepeatIntent"
-  bot_id = aws_lexv2_bot.incident.id
-  bot_locale_id = aws_lexv2_bot_locale.en_us.id
-  sample_utterances = [
-    { utterance = "please repeat that" },
-    { utterance = "say that again" },
-    { utterance = "repeat" }
-  ]
+output "lex_bot_id" {
+  value = aws_lexv2_bot.incident.id
 }
-            bot_locale_id = aws_lexv2_bot_locale.en_us.id
-            value_elicitation_setting {
-              slot_constraint = "Required"
-            }
-          }
 
-          resource "aws_lexv2_bot_alias" "incident_alias" {
-            name = "${var.environment}-alias"
-            bot_id = aws_lexv2_bot.incident.id
-            bot_version = "$LATEST"
-          }
+output "lex_bot_alias_arn" {
+  value = aws_lexv2_bot_alias.incident_alias.arn
+}
 
-          output "lex_bot_id" {
-            value = aws_lexv2_bot.incident.id
-          }
 
-          output "lex_bot_alias_arn" {
-            value = aws_lexv2_bot_alias.incident_alias.arn
-          }

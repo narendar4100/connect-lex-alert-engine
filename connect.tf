@@ -146,7 +146,7 @@ resource "aws_connect_user" "admin" {
   identity_info {
     first_name = "Admin"
     last_name  = "User"
-    email      = "admin@yourcompany.com"
+    email      = "narendarreddy.aws@gmail.com"
   }
 
   phone_config {
@@ -173,27 +173,27 @@ resource "aws_connect_contact_flow" "incident_flow" {
 }
 
 
-resource "aws_connect_user" "admin" {
-  instance_id        = aws_connect_instance.connect.id
-  name               = "admin_user"
-  password           = var.admin_password
-  routing_profile_id = aws_connect_routing_profile.default.routing_profile_id # Ensure this also uses .routing_profile_id or .queue_id guidelines if applicable
+# resource "aws_connect_user" "admin" {
+#   instance_id        = aws_connect_instance.connect.id
+#   name               = "admin_user"
+#   password           = var.admin_password
+#   routing_profile_id = aws_connect_routing_profile.default.routing_profile_id # Ensure this also uses .routing_profile_id or .queue_id guidelines if applicable
   
-  # FIXED: Switched from .id to .security_profile_id
-  security_profile_ids = [
-    aws_connect_security_profile.default.security_profile_id
-  ]
-   # FIXED: Required for CONNECT_MANAGED instances
-  identity_info {
-    first_name = "Admin"
-    last_name  = "User"
-    email      = "narendarreddy.aws@gmail.com" # Change to a valid format
-  }
+#   # FIXED: Switched from .id to .security_profile_id
+#   security_profile_ids = [
+#     aws_connect_security_profile.default.security_profile_id
+#   ]
+#    # FIXED: Required for CONNECT_MANAGED instances
+#   identity_info {
+#     first_name = "Admin"
+#     last_name  = "User"
+#     email      = "narendarreddy.aws@gmail.com" # Change to a valid format
+#   }
   
-  phone_config {
-    phone_type = "SOFT_PHONE"
-  }
-}
+#   phone_config {
+#     phone_type = "SOFT_PHONE"
+#   }
+# }
 
 
 resource "local_file" "contact_flow_generated" {

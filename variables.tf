@@ -42,3 +42,18 @@ variable "ddb_table_name" {
   type    = string
   default = "IncidentResponseLogs"
 }
+
+variable "admin_password" {
+  type    = string
+  default = "ChangeMe!123"
+}
+
+variable "claim_country_code" {
+  type    = string
+  default = "US"
+}
+
+variable "lex_v2_bot_alias_arn" {
+  type = string
+  default = ""
+}

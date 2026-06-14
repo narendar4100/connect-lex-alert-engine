@@ -161,7 +161,6 @@ resource "aws_connect_phone_number" "claim" {
   type         = "DID"
 }
 
-# Correct and supported modern resource syntax for AWS Provider v6.x
 resource "aws_connect_bot_integration" "lex_v2_association" {
   instance_id = aws_connect_instance.connect.id
   bot_type    = "LEX_V2"

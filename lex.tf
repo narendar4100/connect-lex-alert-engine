@@ -121,11 +121,35 @@ resource "aws_lexv2models_slot_type" "incident_type" {
     resolution_strategy = "TopResolution"
   }
 
-  slot_type_values { sample_value { value = "database" } }
-  slot_type_values { sample_value { value = "api" } }
-  slot_type_values { sample_value { value = "network" } }
-  slot_type_values { sample_value { value = "db" } }
-  slot_type_values { sample_value { value = "backend" } }
+  slot_type_values {
+    sample_value {
+      value = "database"
+    }
+  }
+
+  slot_type_values {
+    sample_value {
+      value = "api"
+    }
+  }
+
+  slot_type_values {
+    sample_value {
+      value = "network"
+    }
+  }
+
+  slot_type_values {
+    sample_value {
+      value = "db"
+    }
+  }
+
+  slot_type_values {
+    sample_value {
+      value = "backend"
+    }
+  }
 }
 
 resource "aws_lexv2models_slot" "incident_type_slot" {

@@ -123,30 +123,36 @@ resource "aws_connect_routing_profile" "default" {
   }
 }
 
-# 1. FIX THE PERMISSIONS LIST WITH THE CORRECT SYSTEM KEY NAMES
-resource "aws_connect_security_profile" "default" {
-  instance_id = aws_connect_instance.connect.id
-  name        = "${var.environment}-security-profile"
-  description = "Administrator Security Profile for Incident Management"
+# 1. REMOVE the resource "aws_connect_security_profile" block completely.
 
-  # FIXED: Programmatic system tokens required by the Connect API
-  permissions = [
-    "UsersView",
-    "UsersCreate",
-    "UsersEdit",
-    "UsersDelete",
-    "RoutingProfilesView",
-    "RoutingProfilesCreate",
-    "RoutingProfilesEdit",
-    "RoutingProfilesDelete",
-    "ContactFlowsView",
-    "ContactFlowsCreate",
-    "ContactFlowsEdit",
-    "ContactFlowsPublish",
-    "ContactFlowsDelete"
-  ]
+# 2. DROP in this data block to fetch the built-in AWS Admin profile:
+data "aws_connect_security_profile" "builtin_admin" {
+  instance_id = aws_connect_instance.connect.id
+  name        = "Admin" # This targets the pre-packaged profile built into your instance
 }
 
+# 3. Update your user resource block to map to it
+resource "aws_connect_user" "admin" {
+  instance_id        = aws_connect_instance.connect.id
+  name               = "admin_user"
+  password           = var.admin_password
+  routing_profile_id = aws_connect_routing_profile.default.routing_profile_id
+  
+  # FIXED: Pointing directly to the securely whitelisted profile data reference
+  security_profile_ids = [
+    data.aws_connect_security_profile.builtin_admin.security_profile_id
+  ]
+  
+  identity_info {
+    first_name = "Admin"
+    last_name  = "User"
+    email      = "admin@yourcompany.com"
+  }
+
+  phone_config {
+    phone_type = "SOFT_PHONE"
+  }
+}
 # 2. ADD THIS MISSING RESOURCE TO WHITELIST YOUR LAMBDA BEFORE UPLOADING THE FLOW
 resource "aws_connect_lambda_function_association" "lambda_whitelist" {
   instance_id = aws_connect_instance.connect.id

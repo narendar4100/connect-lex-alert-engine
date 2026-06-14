@@ -9,7 +9,9 @@
         "TextToSpeech": "This is an automated incident alert from your monitoring system. Press 1 to acknowledge, 2 to request a call back, or stay on the line to speak to our automated assistant."
       },
       "Transitions": {
-        "NextAction": "GetInput"
+        "NextAction": "GetInput",
+        "Errors": [],
+        "Conditions": []
       },
       "Metadata": {
         "position": { "x": 100, "y": 100 }
@@ -23,7 +25,7 @@
         "InputType": "DTMF",
         "MaxDigits": 1,
         "SpeechToText": false,
-        "CustomerInput": {}
+        "StoreInput": true
       },
       "Transitions": {
         "NextAction": "CheckDTMF",
@@ -36,7 +38,8 @@
             "ErrorType": "Timeout",
             "NextAction": "Disconnect"
           }
-        ]
+        ],
+        "Conditions": []
       },
       "Metadata": {
         "position": { "x": 300, "y": 100 }
@@ -55,10 +58,18 @@
       },
       "Transitions": {
         "NextAction": "Disconnect",
+        "Errors": [
+          {
+            "ErrorType": "Default",
+            "NextAction": "Disconnect"
+          }
+        ],
         "Conditions": [
           {
-            "ConditionType": "Equals",
-            "Value": "1",
+            "MatchCriteria": {
+              "Operator": "Equals",
+              "Value": "1"
+            },
             "NextAction": "RouteAcknowledge"
           }
         ]
@@ -76,7 +87,9 @@
         }
       },
       "Transitions": {
-        "NextAction": "InvokeLambdaAcknowledge"
+        "NextAction": "InvokeLambdaAcknowledge",
+        "Errors": [],
+        "Conditions": []
       },
       "Metadata": {
         "position": { "x": 700, "y": 100 }
@@ -96,7 +109,8 @@
             "ErrorType": "Default",
             "NextAction": "SetContactAttributes"
           }
-        ]
+        ],
+        "Conditions": []
       },
       "Metadata": {
         "position": { "x": 900, "y": 100 }
@@ -112,7 +126,9 @@
         }
       },
       "Transitions": {
-        "NextAction": "PlayAcknowledgeConfirm"
+        "NextAction": "PlayAcknowledgeConfirm",
+        "Errors": [],
+        "Conditions": []
       },
       "Metadata": {
         "position": { "x": 1100, "y": 100 }
@@ -125,7 +141,9 @@
         "TextToSpeech": "Thank you. Your acknowledgement has been recorded. Goodbye."
       },
       "Transitions": {
-        "NextAction": "Disconnect"
+        "NextAction": "Disconnect",
+        "Errors": [],
+        "Conditions": []
       },
       "Metadata": {
         "position": { "x": 1300, "y": 100 }
@@ -135,6 +153,7 @@
       "Identifier": "Disconnect",
       "Type": "Disconnect",
       "Parameters": {},
+      "Transitions": {},
       "Metadata": {
         "position": { "x": 1500, "y": 100 }
       }

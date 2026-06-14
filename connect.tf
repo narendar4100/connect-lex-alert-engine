@@ -225,12 +225,15 @@ resource "local_file" "contact_flow_generated" {
 }
 
 
-# resource "aws_connect_contact_flow" "incident_flow" {
-#   instance_id  = aws_connect_instance.connect.id
-#   name         = "${var.environment}-incident-flow"
-#   type         = "CONTACT_FLOW" # FIXED: Explicitly declared the flow schema type
-#   content      = local_file.contact_flow_generated.content
-# }
+# Grants permission for the automated flow engine to invoke your backend script on failures
+resource "aws_lambda_permission" "allow_connect_callback" {
+  statement_id  = "AllowExecutionFromAmazonConnect"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda_incident.function_name
+  principal     = "://amazonaws.com"
+  source_arn    = aws_connect_instance.connect.arn
+}
+
 
 resource "aws_connect_phone_number" "claim" {
   country_code = var.claim_country_code
